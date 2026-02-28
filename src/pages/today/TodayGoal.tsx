@@ -13,7 +13,28 @@ export default function TodayGoal() {
   const { t } = useLanguage();
   const [goals, setGoals] = useState<string[]>([]);
   const [completedTasks, setCompletedTasks] = useState<Record<number, boolean>>({});
+  const [isLoaded, setIsLoaded] = useState(false);
   const today = format(new Date(), "yyyy-MM-dd");
+
+  useEffect(() => {
+    if (currentUser) {
+      const storageKey = `completedTasks_${currentUser.uid}_${today}_goal`;
+      const saved = localStorage.getItem(storageKey);
+      if (saved) {
+        try {
+          setCompletedTasks(JSON.parse(saved));
+        } catch (e) {}
+      }
+      setIsLoaded(true);
+    }
+  }, [currentUser, today]);
+
+  useEffect(() => {
+    if (currentUser && isLoaded) {
+      const storageKey = `completedTasks_${currentUser.uid}_${today}_goal`;
+      localStorage.setItem(storageKey, JSON.stringify(completedTasks));
+    }
+  }, [completedTasks, currentUser, today, isLoaded]);
 
   // Helper to format date in Bangla: "Day, Date Month Year"
   const getBanglaDate = () => {

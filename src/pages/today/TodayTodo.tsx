@@ -14,7 +14,29 @@ export default function TodayTodo() {
   const { t } = useLanguage();
   const [todaysTasks, setTodaysTasks] = useState<any[]>([]);
   const [completedTasks, setCompletedTasks] = useState<Record<string, boolean>>({});
+  const [isLoaded, setIsLoaded] = useState(false);
   const currentDay = DAYS[new Date().getDay()];
+  const todayStr = new Date().toISOString().split('T')[0];
+
+  useEffect(() => {
+    if (currentUser) {
+      const storageKey = `completedTasks_${currentUser.uid}_${todayStr}_todo`;
+      const saved = localStorage.getItem(storageKey);
+      if (saved) {
+        try {
+          setCompletedTasks(JSON.parse(saved));
+        } catch (e) {}
+      }
+      setIsLoaded(true);
+    }
+  }, [currentUser, todayStr]);
+
+  useEffect(() => {
+    if (currentUser && isLoaded) {
+      const storageKey = `completedTasks_${currentUser.uid}_${todayStr}_todo`;
+      localStorage.setItem(storageKey, JSON.stringify(completedTasks));
+    }
+  }, [completedTasks, currentUser, todayStr, isLoaded]);
 
   // Helper to format date in Bangla: "Day, Date Month Year"
   const getBanglaDate = () => {
