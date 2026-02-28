@@ -9,7 +9,6 @@ import TapAndHoldButton from "../../components/TapAndHoldButton";
 import { Plus, Trash2, Edit2, ChevronRight, ArrowLeft, Clock, AlertCircle, CheckSquare, Calendar } from "lucide-react";
 import { format, nextDay } from "date-fns";
 import { scheduleNotification } from "../../lib/onesignal";
-import toast from "react-hot-toast";
 
 const DAYS = ["saturday", "sunday", "monday", "tuesday", "wednesday", "thursday", "friday"];
 const DAY_INDICES: { [key: string]: number } = {
@@ -71,8 +70,7 @@ export default function TodoSetup() {
         const dayRoutine: any[] = [];
         routines.forEach(r => {
             if (r.days && r.days[day]) {
-                const validRoutines = Object.values(r.days[day]).filter(Boolean);
-                dayRoutine.push(...validRoutines);
+                dayRoutine.push(...r.days[day]);
             }
         });
         setRoutineForDay(dayRoutine);
@@ -165,7 +163,6 @@ export default function TodoSetup() {
             days: todoData,
             updatedAt: new Date().toISOString()
         });
-        toast.success(language === 'bn' ? "টুডু লিস্ট আপডেট সফল হয়েছে!" : "Todo list updated successfully!");
     } else {
         const newRef = push(ref(db, `todos/${currentUser.uid}`));
         await set(newRef, {
@@ -173,7 +170,6 @@ export default function TodoSetup() {
             days: todoData,
             createdAt: new Date().toISOString()
         });
-        toast.success(language === 'bn' ? "টুডু লিস্ট তৈরি সফল হয়েছে!" : "Todo list created successfully!");
     }
 
     // Schedule Notifications
@@ -205,7 +201,6 @@ export default function TodoSetup() {
   const handleDelete = async (id: string) => {
     if (window.confirm(language === 'bn' ? "আপনি কি নিশ্চিত যে এই টুডু লিস্টটি মুছে ফেলতে চান?" : "Are you sure you want to delete this to-do list?")) {
         await remove(ref(db, `todos/${currentUser?.uid}/${id}`));
-        toast.success(language === 'bn' ? "টুডু লিস্ট মুছে ফেলা হয়েছে!" : "Todo list deleted successfully!");
     }
   };
 

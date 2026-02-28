@@ -8,7 +8,6 @@ import DashboardLayout from "../../components/DashboardLayout";
 import TapAndHoldButton from "../../components/TapAndHoldButton";
 import { Plus, Trash2, Edit2, ChevronRight, ArrowLeft, Copy, Calendar, Clock, BookOpen } from "lucide-react";
 import { motion } from "framer-motion";
-import toast from "react-hot-toast";
 
 const DAYS = ["saturday", "sunday", "monday", "tuesday", "wednesday", "thursday", "friday"];
 
@@ -141,7 +140,6 @@ export default function RoutineSetup() {
             days: routineData,
             updatedAt: new Date().toISOString()
         });
-        toast.success(language === 'bn' ? "রুটিন আপডেট সফল হয়েছে!" : "Routine updated successfully!");
     } else {
         const newRef = push(ref(db, `routines/${currentUser.uid}`));
         await set(newRef, {
@@ -149,7 +147,6 @@ export default function RoutineSetup() {
             days: routineData,
             createdAt: new Date().toISOString()
         });
-        toast.success(language === 'bn' ? "রুটিন তৈরি সফল হয়েছে!" : "Routine created successfully!");
     }
     setView("list");
   };
@@ -157,7 +154,6 @@ export default function RoutineSetup() {
   const handleDelete = async (id: string) => {
     if (window.confirm(language === 'bn' ? "আপনি কি নিশ্চিত যে এই রুটিনটি মুছে ফেলতে চান?" : "Are you sure you want to delete this routine?")) {
         await remove(ref(db, `routines/${currentUser?.uid}/${id}`));
-        toast.success(language === 'bn' ? "রুটিন মুছে ফেলা হয়েছে!" : "Routine deleted successfully!");
     }
   };
 

@@ -7,11 +7,10 @@ import { db } from "../../firebase";
 import { Plus, Trash2, Calendar, CheckCircle2, Edit2, Check, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { format, addDays } from "date-fns";
-import toast from "react-hot-toast";
 
 export default function GoalSetup() {
   const { currentUser } = useAuth();
-  const { t, language } = useLanguage();
+  const { t } = useLanguage();
   const navigate = useNavigate();
   
   const [activeTab, setActiveTab] = useState<'today' | 'tomorrow'>('today');
@@ -136,14 +135,14 @@ export default function GoalSetup() {
                 createdAt: goal.createdAt || new Date().toISOString()
             };
             return acc;
-        }, {} as Record<string, any>);
+        }, {});
 
         await set(goalsRef, goalsData);
-        toast.success(language === 'bn' ? "গোল আপডেট করা হয়েছে!" : "Goals updated successfully!");
+        alert("Goals updated successfully!");
         navigate('/dashboard');
     } catch (error) {
         console.error("Error updating goals:", error);
-        toast.error(language === 'bn' ? "গোল আপডেট করতে সমস্যা হয়েছে।" : "Failed to update goals.");
+        alert("Failed to update goals.");
     } finally {
         setLoading(false);
     }
