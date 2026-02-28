@@ -28,11 +28,18 @@ export default function Dashboard() {
     const dateStr = new Date().toISOString().split('T')[0];
 
     // Fetch Routine
-    const routineRef = ref(db, `routines/${currentUser.uid}/${today}`);
+    const routineRef = ref(db, `routines/${currentUser.uid}`);
     const unsubRoutine = onValue(routineRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {
-        setTodayRoutine(Object.values(data));
+        const list: any[] = [];
+        Object.values(data).forEach((routine: any) => {
+          if (routine.days && routine.days[today]) {
+            const validRoutines = Object.values(routine.days[today]).filter(Boolean);
+            list.push(...validRoutines);
+          }
+        });
+        setTodayRoutine(list);
       } else {
         setTodayRoutine([]);
       }
@@ -46,7 +53,8 @@ export default function Dashboard() {
         const list: any[] = [];
         Object.values(data).forEach((todo: any) => {
           if (todo.days && todo.days[today]) {
-            list.push(...todo.days[today]);
+            const validTodos = Object.values(todo.days[today]).filter(Boolean);
+            list.push(...validTodos);
           }
         });
         setTodayTodos(list);
