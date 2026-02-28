@@ -42,6 +42,7 @@ const translations: Record<string, Record<Language, string>> = {
   "profile": { bn: "প্রোফাইল", en: "Profile" },
   "app_info": { bn: "App info", en: "App Info" },
   "user_manual": { bn: "ইউজার ম্যানুয়াল", en: "User Manual" },
+  "help_support": { bn: "হেল্প এন্ড সাপোর্ট", en: "Help & Support" },
   "logout": { bn: "লগ আউট", en: "Logout" },
   "menu": { bn: "মেনু", en: "Menu" },
   "home": { bn: "হোম", en: "Home" },

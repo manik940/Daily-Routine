@@ -16,6 +16,7 @@ import Settings from './pages/Settings';
 import Profile from './pages/Profile';
 import AppInfo from './pages/AppInfo';
 import UserManual from './pages/UserManual';
+import HelpSupport from './pages/HelpSupport';
 import RoutineView from './pages/routine/RoutineView';
 import TodoView from './pages/todo/TodoView';
 import TodayRoutine from './pages/today/TodayRoutine';
@@ -81,6 +82,7 @@ export default function App() {
         <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
         <Route path="/app-info" element={<ProtectedRoute><AppInfo /></ProtectedRoute>} />
         <Route path="/user-manual" element={<ProtectedRoute><UserManual /></ProtectedRoute>} />
+        <Route path="/help-support" element={<ProtectedRoute><HelpSupport /></ProtectedRoute>} />
       </Routes>
     </Router>
   );

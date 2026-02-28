@@ -50,6 +50,24 @@ export default function RegisterPage() {
     return Math.floor(100000 + Math.random() * 900000).toString();
   };
 
+  const handleNextStep = () => {
+    const { name, roll, class: userClass, group, sscYear, section, shift, school } = formData;
+    
+    if (!name || !roll || !userClass || !section || !shift || !school) {
+      alert("দয়া করে সম্পূর্ণ ফর্মটি পূরণ করুন");
+      return;
+    }
+
+    if (userClass === "9" || userClass === "10") {
+      if (!group || !sscYear) {
+        alert("দয়া করে সম্পূর্ণ ফর্মটি পূরণ করুন");
+        return;
+      }
+    }
+
+    setStep(2);
+  };
+
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     if (formData.password !== formData.confirmPassword) {
@@ -176,7 +194,7 @@ export default function RegisterPage() {
 
       <button
         type="button"
-        onClick={() => setStep(2)}
+        onClick={handleNextStep}
         className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-6 rounded-lg mt-4 flex items-center justify-center gap-2"
       >
         {t('next')} <ArrowRight size={20} />

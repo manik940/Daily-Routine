@@ -58,6 +58,7 @@ export default function DashboardLayout({ children, hideBackButton = false }: { 
     { emoji: "👤", label: t("profile"), path: '/profile' },
     { emoji: "ℹ️", label: t("app_info"), path: '/app-info' },
     { emoji: "📘", label: t("user_manual"), path: '/user-manual' },
+    { emoji: "🎧", label: t("help_support"), path: '/help-support' },
   ];
 
   return (

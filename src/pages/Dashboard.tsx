@@ -5,7 +5,7 @@ import BannerSlider from "../components/BannerSlider";
 import { useAuth } from "../contexts/AuthContext";
 import { useLanguage } from "../contexts/LanguageContext";
 import { useTheme } from "../contexts/ThemeContext";
-import { CheckSquare, Clock, Target, PlusCircle, ChevronRight } from "lucide-react";
+import { CheckSquare, Clock, Target, PlusCircle, ChevronRight, AlarmClock } from "lucide-react";
 import { motion } from "framer-motion";
 import { ref, onValue } from "firebase/database";
 import { db } from "../firebase";
@@ -39,11 +39,17 @@ export default function Dashboard() {
     });
 
     // Fetch Todos
-    const todoRef = ref(db, `todos/${currentUser.uid}/${dateStr}`);
+    const todoRef = ref(db, `todos/${currentUser.uid}`);
     const unsubTodo = onValue(todoRef, (snapshot) => {
       const data = snapshot.val();
       if (data) {
-        setTodayTodos(Object.values(data));
+        const list: any[] = [];
+        Object.values(data).forEach((todo: any) => {
+          if (todo.days && todo.days[today]) {
+            list.push(...todo.days[today]);
+          }
+        });
+        setTodayTodos(list);
       } else {
         setTodayTodos([]);
       }
@@ -123,11 +129,13 @@ export default function Dashboard() {
         <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -mr-10 -mt-10 blur-2xl" />
         <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full -ml-10 -mb-10 blur-xl" />
       </motion.div>
-
+      
       {/* Banner */}
       <div className="mb-6">
         <BannerSlider />
       </div>
+
+      <CurrentTaskBox todayTodos={todayTodos} theme={theme} />
 
       {/* Quick Access Grid - Square, White, Emoji */}
       <h3 className="font-bold text-gray-800 mb-3 flex items-center gap-2 text-sm uppercase tracking-wider opacity-70">
@@ -165,6 +173,138 @@ export default function Dashboard() {
     </DashboardLayout>
   );
 }
+
+// Current Task Box Component
+const CurrentTaskBox = ({ todayTodos, theme }: { todayTodos: any[], theme: string }) => {
+  const [currentTime, setCurrentTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const parseTime = (timeStr: string) => {
+    if (!timeStr) return null;
+    const [hours, minutes] = timeStr.split(':').map(Number);
+    const d = new Date();
+    d.setHours(hours, minutes, 0, 0);
+    return d;
+  };
+
+  // Sort tasks by start time
+  const sortedTasks = [...todayTodos].sort((a, b) => {
+    const startA = parseTime(a.startTime)?.getTime() || 0;
+    const startB = parseTime(b.startTime)?.getTime() || 0;
+    return startA - startB;
+  });
+
+  const currentTask = sortedTasks.find(task => {
+    const start = parseTime(task.startTime);
+    const end = parseTime(task.endTime);
+    if (!start || !end) return false;
+    
+    if (end < start) end.setDate(end.getDate() + 1);
+    
+    const now = currentTime.getTime();
+    return now >= start.getTime() && now < end.getTime();
+  });
+
+  let remainingTimeStr = "";
+  let totalDurationStr = "";
+
+  const banglaDigits = (num: number) => num.toString().replace(/\d/g, d => "০১২৩৪৫৬৭৮৯"[parseInt(d)]);
+  const padEn = (n: number) => n.toString().padStart(2, '0');
+  const toBn = (s: string) => s.replace(/\d/g, d => "০১২৩৪৫৬৭৮৯"[parseInt(d)]);
+
+  if (currentTask) {
+    const start = parseTime(currentTask.startTime);
+    const end = parseTime(currentTask.endTime);
+    if (start && end) {
+      if (end < start) end.setDate(end.getDate() + 1);
+
+      const totalMs = end.getTime() - start.getTime();
+      const totalMins = Math.floor(totalMs / 60000);
+      const hours = Math.floor(totalMins / 60);
+      const mins = totalMins % 60;
+      
+      if (hours > 0 && mins > 0) {
+        totalDurationStr = `${banglaDigits(hours)} ঘণ্টা ${banglaDigits(mins)} মিনিট`;
+      } else if (hours > 0) {
+        totalDurationStr = `${banglaDigits(hours)} ঘণ্টা`;
+      } else {
+        totalDurationStr = `${banglaDigits(mins)} মিনিট`;
+      }
+      
+      const remainingMs = end.getTime() - currentTime.getTime();
+      if (remainingMs > 0) {
+        const rHours = Math.floor(remainingMs / 3600000);
+        const rMins = Math.floor((remainingMs % 3600000) / 60000);
+        const rSecs = Math.floor((remainingMs % 60000) / 1000);
+        
+        if (rHours > 0) {
+          remainingTimeStr = toBn(`${padEn(rHours)}:${padEn(rMins)}:${padEn(rSecs)}`);
+        } else {
+          remainingTimeStr = toBn(`${padEn(rMins)}:${padEn(rSecs)}`);
+        }
+      }
+    }
+  }
+
+  const formatTime = (time24: string) => {
+    if (!time24) return "";
+    const [hours, minutes] = time24.split(':');
+    let h = parseInt(hours, 10);
+    const m = parseInt(minutes, 10);
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    h = h % 12;
+    h = h ? h : 12; 
+    return `${h}:${m.toString().padStart(2, '0')} ${ampm}`;
+  };
+
+  return (
+    <div className="bg-white rounded-2xl p-5 mb-6 shadow-sm border border-gray-100 relative overflow-hidden">
+      <div className="flex justify-between items-start mb-3">
+        <h3 className="font-bold text-gray-800 flex items-center gap-2 text-lg">
+          এই সময়ের কাজ 🎯
+        </h3>
+        {currentTask && (
+          <div className="flex items-center gap-1.5 bg-red-50 text-red-600 px-3 py-1 rounded-full border border-red-100">
+            <span className="text-sm animate-pulse">⏰</span>
+            <span className="font-mono font-bold text-sm tracking-wider">{remainingTimeStr}</span>
+          </div>
+        )}
+      </div>
+
+      {todayTodos.length === 0 ? (
+        <div className="text-center py-8 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+          <p className="text-gray-500 font-medium mb-3">প্রথমে টুডু লিস্ট তৈরি করুন</p>
+          <Link to="/todo/setup" className="bg-blue-600 text-white px-5 py-2.5 rounded-xl font-bold text-sm inline-block shadow-md hover:bg-blue-700 transition-colors">
+            টুডু লিস্ট সেটআপ করুন
+          </Link>
+        </div>
+      ) : currentTask ? (
+        <div className="bg-blue-50/50 rounded-xl p-4 border border-blue-100">
+          <p className="font-bold text-gray-800 text-lg mb-2 leading-snug">{currentTask.task}</p>
+          <div className="flex justify-between items-end mt-4">
+            <div className="flex items-center gap-1.5 text-blue-700 bg-blue-100/50 px-2.5 py-1 rounded-lg">
+              <Clock size={14} />
+              <span className="text-sm font-bold">
+                {formatTime(currentTask.startTime)} - {formatTime(currentTask.endTime)}
+              </span>
+            </div>
+            <div className="text-xs font-bold text-gray-500 bg-gray-100 px-2.5 py-1 rounded-lg">
+              মোট: {totalDurationStr}
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="text-center py-6 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+          <p className="text-gray-500 font-medium">এই সময়ে কোনো কাজ নেই</p>
+        </div>
+      )}
+    </div>
+  );
+};
 
 // New Square Emoji Card Component
 const SquareEmojiCard = ({ to, title, emoji, theme, isAction }: any) => {

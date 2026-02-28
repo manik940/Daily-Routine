@@ -29,6 +29,7 @@ export default function MenuPage() {
     { emoji: "👤", label: t('profile'), path: '/profile', color: "bg-pink-100 text-pink-600" },
     { emoji: "ℹ️", label: t('app_info'), path: '/app-info', color: "bg-cyan-100 text-cyan-600" },
     { emoji: "📘", label: t('user_manual'), path: '/user-manual', color: "bg-yellow-100 text-yellow-600" },
+    { emoji: "🎧", label: t('help_support'), path: '/help-support', color: "bg-teal-100 text-teal-600" },
   ];
 
   return (
