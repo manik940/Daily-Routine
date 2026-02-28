@@ -25,20 +25,23 @@ export default function TodayGoal() {
 
   useEffect(() => {
     if (currentUser) {
-      const completedRef = ref(db, `completedTasks/${currentUser.uid}/${todayStr}/goal`);
-      get(completedRef).then((snapshot) => {
-        if (snapshot.exists()) {
-          setCompletedTasks(snapshot.val());
+      const storageKey = `completed_goal_${currentUser.uid}_${todayStr}`;
+      try {
+        const saved = localStorage.getItem(storageKey);
+        if (saved) {
+          setCompletedTasks(JSON.parse(saved));
         }
-        setIsLoaded(true);
-      });
+      } catch (e) {
+        console.error("Error loading from localStorage", e);
+      }
+      setIsLoaded(true);
     }
   }, [currentUser, todayStr]);
 
   useEffect(() => {
     if (currentUser && isLoaded) {
-      const completedRef = ref(db, `completedTasks/${currentUser.uid}/${todayStr}/goal`);
-      set(completedRef, completedTasks);
+      const storageKey = `completed_goal_${currentUser.uid}_${todayStr}`;
+      localStorage.setItem(storageKey, JSON.stringify(completedTasks));
     }
   }, [completedTasks, currentUser, todayStr, isLoaded]);
 
