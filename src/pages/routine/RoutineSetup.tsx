@@ -38,6 +38,7 @@ export default function RoutineSetup() {
   const [currentDay, setCurrentDay] = useState("");
   const [subjectCount, setSubjectCount] = useState(0);
   const [daySubjects, setDaySubjects] = useState<any[]>([]);
+  const [isSameAsPrevious, setIsSameAsPrevious] = useState(false);
 
   useEffect(() => {
     if (currentUser) {
@@ -74,6 +75,7 @@ export default function RoutineSetup() {
     const existing = routineData[day] || [];
     setDaySubjects(existing);
     setSubjectCount(existing.length || 0);
+    setIsSameAsPrevious(false);
     setView("day_edit");
   };
 
@@ -107,17 +109,24 @@ export default function RoutineSetup() {
     setView("weekly");
   };
 
-  const copyFromPrevious = () => {
-    const currentIndex = DAYS.indexOf(currentDay);
-    if (currentIndex > 0) {
-        const prevDay = DAYS[currentIndex - 1];
-        if (routineData[prevDay]) {
-            // Deep copy to avoid reference issues
-            setDaySubjects(JSON.parse(JSON.stringify(routineData[prevDay])));
-            setSubjectCount(routineData[prevDay].length);
-        } else {
-            alert(language === 'bn' ? "আগের দিনের কোনো রুটিন নেই" : "No routine for previous day");
-        }
+  const handleSameAsPreviousChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const checked = e.target.checked;
+    setIsSameAsPrevious(checked);
+    if (checked) {
+      const currentIndex = DAYS.indexOf(currentDay);
+      if (currentIndex > 0) {
+          const prevDay = DAYS[currentIndex - 1];
+          if (routineData[prevDay]) {
+              setDaySubjects(JSON.parse(JSON.stringify(routineData[prevDay])));
+              setSubjectCount(routineData[prevDay].length);
+          } else {
+              alert(language === 'bn' ? "আগের দিনের কোনো রুটিন নেই" : "No routine for previous day");
+              setIsSameAsPrevious(false);
+          }
+      }
+    } else {
+      setDaySubjects([]);
+      setSubjectCount(0);
     }
   };
 
@@ -331,13 +340,18 @@ export default function RoutineSetup() {
         </div>
 
         {DAYS.indexOf(currentDay) > 0 && (
-            <button 
-                onClick={copyFromPrevious}
-                className="w-full mb-6 py-3 bg-blue-50 text-blue-700 rounded-xl font-bold flex items-center justify-center gap-2 hover:bg-blue-100 transition-colors border border-blue-100"
-            >
-                <Copy size={18} />
-                {language === 'bn' ? "আগের দিনের মতো সেম করুন" : "Copy from previous day"}
-            </button>
+            <div className="flex items-center gap-3 mb-6 p-4 bg-emerald-50 rounded-xl border border-emerald-100">
+                <input 
+                    type="checkbox" 
+                    id="sameAsPrev"
+                    checked={isSameAsPrevious}
+                    onChange={handleSameAsPreviousChange}
+                    className="w-5 h-5 text-emerald-600 rounded border-emerald-300 focus:ring-emerald-500"
+                />
+                <label htmlFor="sameAsPrev" className="font-bold text-emerald-800 cursor-pointer select-none">
+                    {language === 'bn' ? "আগের দিনের মতো সেম করুন" : "Same as previous day"}
+                </label>
+            </div>
         )}
 
         <div className="space-y-4">
@@ -389,7 +403,7 @@ export default function RoutineSetup() {
             ))}
         </div>
 
-        <div className="fixed bottom-6 left-0 right-0 px-4 z-10">
+        <div className="fixed bottom-24 left-0 right-0 px-4 z-10">
             <div className="max-w-md mx-auto">
                 <button 
                     onClick={saveDay}
@@ -449,7 +463,7 @@ export default function RoutineSetup() {
             })}
         </div>
 
-        <div className="fixed bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-white via-white to-transparent z-10">
+        <div className="fixed bottom-16 left-0 right-0 p-6 bg-gradient-to-t from-white via-white to-transparent z-10">
             <div className="max-w-md mx-auto">
                 <TapAndHoldButton 
                     onSuccess={handleSaveRoutine} 

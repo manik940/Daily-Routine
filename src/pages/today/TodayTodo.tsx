@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ref, onValue } from "firebase/database";
+import { ref, onValue, set, get } from "firebase/database";
 import { db } from "../../firebase";
 import { useAuth } from "../../contexts/AuthContext";
 import { useLanguage } from "../../contexts/LanguageContext";
@@ -16,25 +16,31 @@ export default function TodayTodo() {
   const [completedTasks, setCompletedTasks] = useState<Record<string, boolean>>({});
   const [isLoaded, setIsLoaded] = useState(false);
   const currentDay = DAYS[new Date().getDay()];
-  const todayStr = new Date().toISOString().split('T')[0];
+  
+  const getLocalTodayStr = () => {
+    const date = new Date();
+    const offset = date.getTimezoneOffset() * 60000;
+    const localDate = new Date(date.getTime() - offset);
+    return localDate.toISOString().split('T')[0];
+  };
+  const todayStr = getLocalTodayStr();
 
   useEffect(() => {
     if (currentUser) {
-      const storageKey = `completedTasks_${currentUser.uid}_${todayStr}_todo`;
-      const saved = localStorage.getItem(storageKey);
-      if (saved) {
-        try {
-          setCompletedTasks(JSON.parse(saved));
-        } catch (e) {}
-      }
-      setIsLoaded(true);
+      const completedRef = ref(db, `completedTasks/${currentUser.uid}/${todayStr}/todo`);
+      get(completedRef).then((snapshot) => {
+        if (snapshot.exists()) {
+          setCompletedTasks(snapshot.val());
+        }
+        setIsLoaded(true);
+      });
     }
   }, [currentUser, todayStr]);
 
   useEffect(() => {
     if (currentUser && isLoaded) {
-      const storageKey = `completedTasks_${currentUser.uid}_${todayStr}_todo`;
-      localStorage.setItem(storageKey, JSON.stringify(completedTasks));
+      const completedRef = ref(db, `completedTasks/${currentUser.uid}/${todayStr}/todo`);
+      set(completedRef, completedTasks);
     }
   }, [completedTasks, currentUser, todayStr, isLoaded]);
 

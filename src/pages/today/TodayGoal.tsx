@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ref, onValue } from "firebase/database";
+import { ref, onValue, set, get } from "firebase/database";
 import { db } from "../../firebase";
 import { useAuth } from "../../contexts/AuthContext";
 import { useLanguage } from "../../contexts/LanguageContext";
@@ -14,27 +14,33 @@ export default function TodayGoal() {
   const [goals, setGoals] = useState<string[]>([]);
   const [completedTasks, setCompletedTasks] = useState<Record<number, boolean>>({});
   const [isLoaded, setIsLoaded] = useState(false);
-  const today = format(new Date(), "yyyy-MM-dd");
+  
+  const getLocalTodayStr = () => {
+    const date = new Date();
+    const offset = date.getTimezoneOffset() * 60000;
+    const localDate = new Date(date.getTime() - offset);
+    return localDate.toISOString().split('T')[0];
+  };
+  const todayStr = getLocalTodayStr();
 
   useEffect(() => {
     if (currentUser) {
-      const storageKey = `completedTasks_${currentUser.uid}_${today}_goal`;
-      const saved = localStorage.getItem(storageKey);
-      if (saved) {
-        try {
-          setCompletedTasks(JSON.parse(saved));
-        } catch (e) {}
-      }
-      setIsLoaded(true);
+      const completedRef = ref(db, `completedTasks/${currentUser.uid}/${todayStr}/goal`);
+      get(completedRef).then((snapshot) => {
+        if (snapshot.exists()) {
+          setCompletedTasks(snapshot.val());
+        }
+        setIsLoaded(true);
+      });
     }
-  }, [currentUser, today]);
+  }, [currentUser, todayStr]);
 
   useEffect(() => {
     if (currentUser && isLoaded) {
-      const storageKey = `completedTasks_${currentUser.uid}_${today}_goal`;
-      localStorage.setItem(storageKey, JSON.stringify(completedTasks));
+      const completedRef = ref(db, `completedTasks/${currentUser.uid}/${todayStr}/goal`);
+      set(completedRef, completedTasks);
     }
-  }, [completedTasks, currentUser, today, isLoaded]);
+  }, [completedTasks, currentUser, todayStr, isLoaded]);
 
   // Helper to format date in Bangla: "Day, Date Month Year"
   const getBanglaDate = () => {
@@ -64,7 +70,7 @@ export default function TodayGoal() {
 
   useEffect(() => {
     if (currentUser) {
-      const goalRef = ref(db, `goals/${currentUser.uid}/${today}`);
+      const goalRef = ref(db, `goals/${currentUser.uid}/${todayStr}`);
       onValue(goalRef, (snapshot) => {
         const data = snapshot.val();
         if (data) {
@@ -91,7 +97,7 @@ export default function TodayGoal() {
         }
       });
     }
-  }, [currentUser, today]);
+  }, [currentUser, todayStr]);
 
   const toggleTask = (idx: number) => {
     setCompletedTasks(prev => ({
