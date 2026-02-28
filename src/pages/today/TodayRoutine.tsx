@@ -42,7 +42,7 @@ export default function TodayRoutine() {
 
   const banglaDateString = getBanglaDate();
 
-  // Helper to format time to 12h with Bangla digits
+  // Helper to format time to 12h with English digits
   const formatTime = (time24: string) => {
     if (!time24) return "";
     const [hours, minutes] = time24.split(':');
@@ -52,11 +52,7 @@ export default function TodayRoutine() {
     h = h % 12;
     h = h ? h : 12; 
     
-    const banglaDigits = (num: number) => {
-        return num.toString().replace(/\d/g, (d) => "০১২৩৪৫৬৭৮৯"[parseInt(d)]);
-    };
-    
-    return `${banglaDigits(h)}:${banglaDigits(m).padStart(2, '0')} ${ampm}`;
+    return `${h}:${m.toString().padStart(2, '0')} ${ampm}`;
   };
 
   useEffect(() => {
