@@ -1,0 +1,87 @@
+import React, { useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import OneSignal from 'react-onesignal';
+import { useAuth } from './contexts/AuthContext';
+import LandingPage from './pages/auth/LandingPage';
+import EmailInputPage from './pages/auth/EmailInputPage';
+import PasswordPage from './pages/auth/PasswordPage';
+import RegisterPage from './pages/auth/RegisterPage';
+import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
+import VerifyEmailPage from './pages/auth/VerifyEmailPage';
+import Dashboard from './pages/Dashboard';
+import RoutineSetup from './pages/routine/RoutineSetup';
+import TodoSetup from './pages/todo/TodoSetup';
+import GoalSetup from './pages/goal/GoalSetup';
+import Settings from './pages/Settings';
+import Profile from './pages/Profile';
+import AppInfo from './pages/AppInfo';
+import UserManual from './pages/UserManual';
+import RoutineView from './pages/routine/RoutineView';
+import TodoView from './pages/todo/TodoView';
+import TodayRoutine from './pages/today/TodayRoutine';
+import TodayTodo from './pages/today/TodayTodo';
+import TodayGoal from './pages/today/TodayGoal';
+import TomorrowGoal from './pages/goal/TomorrowGoal';
+import MenuPage from './pages/MenuPage';
+
+function ProtectedRoute({ children }: { children: React.ReactNode }) {
+  const { currentUser, loading } = useAuth();
+  if (loading) return <div className="flex items-center justify-center h-screen">Loading...</div>;
+  if (!currentUser) return <Navigate to="/" />;
+  return <>{children}</>;
+}
+
+export default function App() {
+  useEffect(() => {
+    const runOneSignal = async () => {
+      try {
+        await OneSignal.init({
+          appId: "99bf2974-08db-4721-9159-13469eaa3440",
+          allowLocalhostAsSecureOrigin: true,
+        });
+        OneSignal.Slidedown.promptPush();
+      } catch (error) {
+        console.error("OneSignal Init Error:", error);
+      }
+    };
+    runOneSignal();
+  }, []);
+
+  return (
+    <Router>
+      <Routes>
+        {/* Auth Routes */}
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/auth/email" element={<EmailInputPage />} />
+        <Route path="/auth/password" element={<PasswordPage />} />
+        <Route path="/auth/register" element={<RegisterPage />} />
+        <Route path="/auth/forgot-password" element={<ForgotPasswordPage />} />
+        <Route path="/auth/verify" element={<VerifyEmailPage />} />
+
+        {/* Protected Routes */}
+        <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+        
+        {/* Feature Routes */}
+        <Route path="/routine/setup" element={<ProtectedRoute><RoutineSetup /></ProtectedRoute>} />
+        <Route path="/routine/view/:id" element={<ProtectedRoute><RoutineView /></ProtectedRoute>} />
+        
+        <Route path="/todo/setup" element={<ProtectedRoute><TodoSetup /></ProtectedRoute>} />
+        <Route path="/todo/view/:id" element={<ProtectedRoute><TodoView /></ProtectedRoute>} />
+        
+        <Route path="/goal/setup" element={<ProtectedRoute><GoalSetup /></ProtectedRoute>} />
+        <Route path="/goal/tomorrow" element={<ProtectedRoute><TomorrowGoal /></ProtectedRoute>} />
+
+        <Route path="/today/routine" element={<ProtectedRoute><TodayRoutine /></ProtectedRoute>} />
+        <Route path="/today/todo" element={<ProtectedRoute><TodayTodo /></ProtectedRoute>} />
+        <Route path="/today/goal" element={<ProtectedRoute><TodayGoal /></ProtectedRoute>} />
+        
+        <Route path="/menu" element={<ProtectedRoute><MenuPage /></ProtectedRoute>} />
+
+        <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
+        <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
+        <Route path="/app-info" element={<ProtectedRoute><AppInfo /></ProtectedRoute>} />
+        <Route path="/user-manual" element={<ProtectedRoute><UserManual /></ProtectedRoute>} />
+      </Routes>
+    </Router>
+  );
+}

@@ -1,0 +1,70 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: var(--color-primary);
+  --color-secondary: var(--color-secondary);
+  --color-accent: var(--color-accent);
+}
+
+/* Theme Variables - Default (Emerald) */
+:root, [data-theme="default"] {
+  --color-primary: #10b981; 
+  --color-secondary: #34d399;
+  --color-accent: #059669;
+}
+
+/* Theme overrides */
+[data-theme="red"] {
+  --color-primary: #ef4444;
+  --color-secondary: #f87171;
+  --color-accent: #b91c1c;
+}
+
+[data-theme="green"] {
+  --color-primary: #22c55e;
+  --color-secondary: #4ade80;
+  --color-accent: #15803d;
+}
+
+[data-theme="blue"] {
+  --color-primary: #3b82f6;
+  --color-secondary: #60a5fa;
+  --color-accent: #1d4ed8;
+}
+
+[data-theme="orange"] {
+  --color-primary: #f97316;
+  --color-secondary: #fb923c;
+  --color-accent: #c2410c;
+}
+
+[data-theme="mix"] {
+  --color-primary: #8b5cf6;
+  --color-secondary: #ec4899;
+  --color-accent: #6d28d9;
+}
+
+body {
+  @apply bg-gray-50 text-gray-900 font-sans;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Tap and Hold Animation */
+@keyframes fillCircle {
+  0% { stroke-dasharray: 0, 100; }
+  100% { stroke-dasharray: 100, 0; }
+}
