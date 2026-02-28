@@ -7,6 +7,7 @@ import { useLanguage } from "../../contexts/LanguageContext";
 import DashboardLayout from "../../components/DashboardLayout";
 import { Plus, Trash2, Calendar as CalendarIcon } from "lucide-react";
 import { format, addDays } from "date-fns";
+import toast from "react-hot-toast";
 
 export default function TomorrowGoal() {
   const { currentUser } = useAuth();
@@ -54,7 +55,7 @@ export default function TomorrowGoal() {
         createdAt: new Date().toISOString()
     });
     
-    alert(t('success'));
+    toast.success(t('success'));
     navigate("/dashboard");
   };
 

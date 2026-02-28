@@ -95,9 +95,10 @@ export default function TodayRoutine() {
           const list: any[] = [];
           Object.values(data).forEach((routine: any) => {
             if (routine.days && routine.days[currentDay]) {
+                const validSubjects = Object.values(routine.days[currentDay]).filter(Boolean);
                 list.push({
                     title: routine.title,
-                    subjects: routine.days[currentDay]
+                    subjects: validSubjects
                 });
             }
           });

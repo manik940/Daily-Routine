@@ -71,7 +71,8 @@ export default function TodoSetup() {
         const dayRoutine: any[] = [];
         routines.forEach(r => {
             if (r.days && r.days[day]) {
-                dayRoutine.push(...r.days[day]);
+                const validRoutines = Object.values(r.days[day]).filter(Boolean);
+                dayRoutine.push(...validRoutines);
             }
         });
         setRoutineForDay(dayRoutine);
