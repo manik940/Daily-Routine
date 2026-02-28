@@ -8,6 +8,7 @@ import DashboardLayout from "../../components/DashboardLayout";
 import TapAndHoldButton from "../../components/TapAndHoldButton";
 import { Plus, Trash2, Edit2, ChevronRight, ArrowLeft, Copy, Calendar, Clock, BookOpen } from "lucide-react";
 import { motion } from "framer-motion";
+import toast from "react-hot-toast";
 
 const DAYS = ["saturday", "sunday", "monday", "tuesday", "wednesday", "thursday", "friday"];
 

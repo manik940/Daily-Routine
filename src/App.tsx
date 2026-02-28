@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import OneSignal from 'react-onesignal';
+import { Toaster } from 'react-hot-toast';
 import { useAuth } from './contexts/AuthContext';
 import LandingPage from './pages/auth/LandingPage';
 import EmailInputPage from './pages/auth/EmailInputPage';
@@ -50,6 +51,7 @@ export default function App() {
 
   return (
     <Router>
+      <Toaster position="top-center" toastOptions={{ duration: 3000 }} />
       <Routes>
         {/* Auth Routes */}
         <Route path="/" element={<LandingPage />} />

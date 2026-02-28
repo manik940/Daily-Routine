@@ -177,8 +177,13 @@ export default function Dashboard() {
 // Current Task Box Component
 const CurrentTaskBox = ({ todayTodos, theme }: { todayTodos: any[], theme: string }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
+  const [notifiedTaskId, setNotifiedTaskId] = useState<string | null>(null);
 
   useEffect(() => {
+    // Request notification permission
+    if ("Notification" in window && Notification.permission !== "granted" && Notification.permission !== "denied") {
+      Notification.requestPermission();
+    }
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
@@ -208,6 +213,17 @@ const CurrentTaskBox = ({ todayTodos, theme }: { todayTodos: any[], theme: strin
     const now = currentTime.getTime();
     return now >= start.getTime() && now < end.getTime();
   });
+
+  const formatTime = (time24: string) => {
+    if (!time24) return "";
+    const [hours, minutes] = time24.split(':');
+    let h = parseInt(hours, 10);
+    const m = parseInt(minutes, 10);
+    const ampm = h >= 12 ? 'PM' : 'AM';
+    h = h % 12;
+    h = h ? h : 12; 
+    return `${h}:${m.toString().padStart(2, '0')} ${ampm}`;
+  };
 
   let remainingTimeStr = "";
   let totalDurationStr = "";
@@ -250,16 +266,18 @@ const CurrentTaskBox = ({ todayTodos, theme }: { todayTodos: any[], theme: strin
     }
   }
 
-  const formatTime = (time24: string) => {
-    if (!time24) return "";
-    const [hours, minutes] = time24.split(':');
-    let h = parseInt(hours, 10);
-    const m = parseInt(minutes, 10);
-    const ampm = h >= 12 ? 'PM' : 'AM';
-    h = h % 12;
-    h = h ? h : 12; 
-    return `${h}:${m.toString().padStart(2, '0')} ${ampm}`;
-  };
+  useEffect(() => {
+    if (currentTask && currentTask.id !== notifiedTaskId) {
+      // Trigger notification
+      if ("Notification" in window && Notification.permission === "granted") {
+        new Notification("নতুন কাজ শুরু হয়েছে! 🎯", {
+          body: `${currentTask.task}\nসময়: ${formatTime(currentTask.startTime)} - ${formatTime(currentTask.endTime)}\nমোট: ${totalDurationStr}`,
+          icon: "/icon.png" // Fallback icon
+        });
+      }
+      setNotifiedTaskId(currentTask.id);
+    }
+  }, [currentTask, notifiedTaskId, totalDurationStr]);
 
   return (
     <div className="bg-white rounded-2xl p-5 mb-6 shadow-sm border border-gray-100 relative overflow-hidden">
