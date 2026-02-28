@@ -4,7 +4,7 @@ import { useLanguage } from "../../contexts/LanguageContext";
 import DashboardLayout from "../../components/DashboardLayout";
 import { ref, push, set, onValue, remove } from "firebase/database";
 import { db } from "../../firebase";
-import { Plus, Trash2, ArrowLeft, Calendar, CheckCircle2 } from "lucide-react";
+import { Plus, Trash2, Calendar, CheckCircle2, Edit2, Check, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { format, addDays } from "date-fns";
 
@@ -17,6 +17,10 @@ export default function GoalSetup() {
   const [goals, setGoals] = useState<any[]>([]);
   const [newGoal, setNewGoal] = useState("");
   const [loading, setLoading] = useState(true);
+  
+  // Edit state
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editText, setEditText] = useState("");
 
   // Calculate dates using local time
   const todayDate = new Date();
@@ -100,6 +104,22 @@ export default function GoalSetup() {
     setGoals(goals.filter(g => g.id !== goalId));
   };
 
+  const startEdit = (goal: any) => {
+    setEditingId(goal.id);
+    setEditText(goal.text);
+  };
+
+  const saveEdit = (goalId: string) => {
+    if (!editText.trim()) return;
+    setGoals(goals.map(g => g.id === goalId ? { ...g, text: editText } : g));
+    setEditingId(null);
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditText("");
+  };
+
   const handleUpdateGoals = async () => {
     if (!currentUser) return;
     setLoading(true);
@@ -119,6 +139,7 @@ export default function GoalSetup() {
 
         await set(goalsRef, goalsData);
         alert("Goals updated successfully!");
+        navigate('/dashboard');
     } catch (error) {
         console.error("Error updating goals:", error);
         alert("Failed to update goals.");
@@ -129,12 +150,9 @@ export default function GoalSetup() {
 
   return (
     <DashboardLayout>
-      <div className="max-w-md mx-auto px-4 py-2">
-        {/* Header */}
-        <div className="flex items-center gap-3 mb-6">
-            <button onClick={() => navigate(-1)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-                <ArrowLeft size={24} className="text-gray-600" />
-            </button>
+      <div className="max-w-md mx-auto px-4 py-2 flex flex-col min-h-[calc(100vh-100px)]">
+        {/* Header - Removed back button as requested */}
+        <div className="flex items-center justify-center mb-6">
             <h2 className="text-xl font-bold text-gray-800">Daily Goal সেটআপ</h2>
         </div>
 
@@ -193,21 +211,49 @@ export default function GoalSetup() {
         </form>
 
         {/* Goal List */}
-        <div className="space-y-3 mb-24">
+        <div className="space-y-3 flex-1 mb-8">
             {goals.map((goal, index) => (
                 <div key={goal.id} className="bg-white p-4 rounded-2xl border border-gray-100 flex justify-between items-center shadow-sm group hover:border-emerald-200 transition-all">
-                    <div className="flex items-center gap-3">
-                        <div className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-sm shrink-0">
-                            {index + 1}
+                    {editingId === goal.id ? (
+                        <div className="flex-1 flex items-center gap-2">
+                            <input
+                                type="text"
+                                value={editText}
+                                onChange={(e) => setEditText(e.target.value)}
+                                className="flex-1 px-3 py-2 border border-emerald-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none text-gray-800"
+                                autoFocus
+                            />
+                            <button onClick={() => saveEdit(goal.id)} className="p-2 text-emerald-600 hover:bg-emerald-50 rounded-full transition-colors">
+                                <Check size={20} />
+                            </button>
+                            <button onClick={cancelEdit} className="p-2 text-gray-400 hover:bg-gray-50 rounded-full transition-colors">
+                                <X size={20} />
+                            </button>
                         </div>
-                        <span className="text-gray-700 font-medium leading-snug">{goal.text}</span>
-                    </div>
-                    <button 
-                        onClick={() => handleDeleteGoal(goal.id)}
-                        className="text-gray-400 hover:text-red-500 p-2 rounded-full hover:bg-red-50 transition-all opacity-0 group-hover:opacity-100 focus:opacity-100"
-                    >
-                        <Trash2 size={18} />
-                    </button>
+                    ) : (
+                        <>
+                            <div className="flex items-center gap-3 flex-1">
+                                <div className="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold text-sm shrink-0">
+                                    {index + 1}
+                                </div>
+                                <span className="text-gray-700 font-medium leading-snug">{goal.text}</span>
+                            </div>
+                            <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all">
+                                <button 
+                                    onClick={() => startEdit(goal)}
+                                    className="text-gray-400 hover:text-blue-500 p-2 rounded-full hover:bg-blue-50 transition-all"
+                                >
+                                    <Edit2 size={18} />
+                                </button>
+                                <button 
+                                    onClick={() => handleDeleteGoal(goal.id)}
+                                    className="text-gray-400 hover:text-red-500 p-2 rounded-full hover:bg-red-50 transition-all"
+                                >
+                                    <Trash2 size={18} />
+                                </button>
+                            </div>
+                        </>
+                    )}
                 </div>
             ))}
             
@@ -219,18 +265,16 @@ export default function GoalSetup() {
             )}
         </div>
 
-        {/* Publish Button (Fixed at bottom) */}
-        <div className="fixed bottom-6 left-0 right-0 px-6">
-            <div className="max-w-md mx-auto">
-                <button 
-                    type="button"
-                    onClick={handleUpdateGoals}
-                    className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-bold shadow-lg shadow-emerald-200 flex items-center justify-center gap-2 transition-all active:scale-95"
-                >
-                    <CheckCircle2 size={20} />
-                    আপডেট করুন
-                </button>
-            </div>
+        {/* Publish Button (Normal flow, not fixed) */}
+        <div className="mt-auto pb-8">
+            <button 
+                type="button"
+                onClick={handleUpdateGoals}
+                className="w-full py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-2xl font-bold shadow-lg shadow-emerald-200 flex items-center justify-center gap-2 transition-all active:scale-95"
+            >
+                <CheckCircle2 size={20} />
+                আপডেট করুন
+            </button>
         </div>
 
       </div>
