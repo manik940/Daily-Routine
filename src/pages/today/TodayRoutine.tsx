@@ -141,10 +141,27 @@ export default function TodayRoutine() {
                             
                             return (
                                 <div key={sIdx} className="p-5 flex flex-col sm:flex-row sm:items-center gap-4 hover:bg-gray-50 transition-colors">
-                                    <div className="flex items-start gap-4 flex-1">
+                                    <div className="flex items-start gap-3 flex-1">
+                                        <div className="w-6 h-6 mt-1 rounded-full bg-emerald-100 text-emerald-700 font-bold flex items-center justify-center shrink-0 text-sm">
+                                            {sIdx + 1}
+                                        </div>
+                                        <div className="flex flex-col flex-1">
+                                            <span className={`text-lg font-bold text-gray-800 leading-snug transition-all ${isCompleted ? "line-through text-gray-400" : ""}`}>
+                                                {subject.subject}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="flex items-center gap-3 self-start sm:self-center shrink-0">
+                                        <div className="flex items-center gap-2 bg-emerald-50 text-emerald-900 px-3 py-1.5 rounded-lg border border-emerald-100">
+                                            <span className="text-lg">⏰</span>
+                                            <span className="font-bold text-sm whitespace-nowrap tracking-wide">
+                                                {formatTime(subject.startTime)} - {formatTime(subject.endTime)}
+                                            </span>
+                                        </div>
                                         <button 
                                             onClick={() => toggleTask(uniqueKey)}
-                                            className={`w-7 h-7 mt-1 rounded-lg border-2 flex items-center justify-center transition-all duration-200 shadow-sm shrink-0 ${
+                                            className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all duration-200 shadow-sm shrink-0 ${
                                                 isCompleted 
                                                 ? "bg-emerald-600 border-emerald-600" 
                                                 : "bg-white border-gray-300 hover:border-emerald-500"
@@ -157,23 +174,11 @@ export default function TodayRoutine() {
                                                         animate={{ scale: 1 }}
                                                         exit={{ scale: 0 }}
                                                     >
-                                                        <Check size={18} className="text-white stroke-[3]" />
+                                                        <Check size={14} className="text-white stroke-[3]" />
                                                     </motion.div>
                                                 )}
                                             </AnimatePresence>
                                         </button>
-                                        <div className="flex flex-col">
-                                            <span className={`text-lg font-bold text-gray-800 leading-snug transition-all ${isCompleted ? "line-through text-gray-400" : ""}`}>
-                                                {subject.subject}
-                                            </span>
-                                        </div>
-                                    </div>
-                                    
-                                    <div className="flex items-center gap-2 self-start sm:self-center bg-emerald-50 text-emerald-900 px-3 py-1.5 rounded-lg border border-emerald-100 shrink-0">
-                                        <span className="text-lg">⏰</span>
-                                        <span className="font-bold text-sm whitespace-nowrap tracking-wide">
-                                            {formatTime(subject.startTime)} - {formatTime(subject.endTime)}
-                                        </span>
                                     </div>
                                 </div>
                             );

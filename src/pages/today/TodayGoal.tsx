@@ -137,10 +137,18 @@ export default function TodayGoal() {
                     {goals.map((goal, idx) => {
                         const isCompleted = completedTasks[idx];
                         return (
-                            <div key={idx} className="p-5 flex items-start gap-4 hover:bg-gray-50 transition-colors">
+                            <div key={idx} className="p-5 flex items-start gap-3 hover:bg-gray-50 transition-colors">
+                                <div className="w-6 h-6 mt-1 rounded-full bg-orange-100 text-orange-700 font-bold flex items-center justify-center shrink-0 text-sm">
+                                    {idx + 1}
+                                </div>
+                                <div className="flex-1 pt-0.5">
+                                    <span className={`text-lg font-bold text-gray-800 leading-snug transition-all ${isCompleted ? "line-through text-gray-400" : ""}`}>
+                                        {goal}
+                                    </span>
+                                </div>
                                 <button 
                                     onClick={() => toggleTask(idx)}
-                                    className={`w-7 h-7 mt-1 rounded-lg border-2 flex items-center justify-center transition-all duration-200 shadow-sm shrink-0 ${
+                                    className={`w-6 h-6 mt-1 rounded-md border-2 flex items-center justify-center transition-all duration-200 shadow-sm shrink-0 ${
                                         isCompleted 
                                         ? "bg-orange-500 border-orange-500" 
                                         : "bg-white border-gray-300 hover:border-orange-500"
@@ -153,16 +161,11 @@ export default function TodayGoal() {
                                                 animate={{ scale: 1 }}
                                                 exit={{ scale: 0 }}
                                             >
-                                                <Check size={18} className="text-white stroke-[3]" />
+                                                <Check size={14} className="text-white stroke-[3]" />
                                             </motion.div>
                                         )}
                                     </AnimatePresence>
                                 </button>
-                                <div className="flex-1 pt-0.5">
-                                    <span className={`text-lg font-bold text-gray-800 leading-snug transition-all ${isCompleted ? "line-through text-gray-400" : ""}`}>
-                                        {goal}
-                                    </span>
-                                </div>
                             </div>
                         );
                     })}

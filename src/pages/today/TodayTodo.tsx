@@ -142,10 +142,27 @@ export default function TodayTodo() {
                             
                             return (
                                 <div key={tIdx} className="p-5 flex flex-col sm:flex-row sm:items-center gap-4 hover:bg-gray-50 transition-colors">
-                                    <div className="flex items-start gap-4 flex-1">
+                                    <div className="flex items-start gap-3 flex-1">
+                                        <div className="w-6 h-6 mt-1 rounded-full bg-blue-100 text-blue-700 font-bold flex items-center justify-center shrink-0 text-sm">
+                                            {tIdx + 1}
+                                        </div>
+                                        <div className="flex flex-col flex-1">
+                                            <span className={`text-lg font-bold text-gray-800 leading-snug transition-all ${isCompleted ? "line-through text-gray-400" : ""}`}>
+                                                {task.task}
+                                            </span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="flex items-center gap-3 self-start sm:self-center shrink-0">
+                                        <div className="flex items-center gap-2 bg-blue-50 text-blue-900 px-3 py-1.5 rounded-lg border border-blue-100">
+                                            <span className="text-lg">⏰</span>
+                                            <span className="font-bold text-sm whitespace-nowrap tracking-wide">
+                                                {formatTime(task.startTime)} - {formatTime(task.endTime)}
+                                            </span>
+                                        </div>
                                         <button 
                                             onClick={() => toggleTask(uniqueKey)}
-                                            className={`w-7 h-7 mt-1 rounded-lg border-2 flex items-center justify-center transition-all duration-200 shadow-sm shrink-0 ${
+                                            className={`w-6 h-6 rounded-md border-2 flex items-center justify-center transition-all duration-200 shadow-sm shrink-0 ${
                                                 isCompleted 
                                                 ? "bg-blue-600 border-blue-600" 
                                                 : "bg-white border-gray-300 hover:border-blue-500"
@@ -158,23 +175,11 @@ export default function TodayTodo() {
                                                         animate={{ scale: 1 }}
                                                         exit={{ scale: 0 }}
                                                     >
-                                                        <Check size={18} className="text-white stroke-[3]" />
+                                                        <Check size={14} className="text-white stroke-[3]" />
                                                     </motion.div>
                                                 )}
                                             </AnimatePresence>
                                         </button>
-                                        <div className="flex flex-col">
-                                            <span className={`text-lg font-bold text-gray-800 leading-snug transition-all ${isCompleted ? "line-through text-gray-400" : ""}`}>
-                                                {task.task}
-                                            </span>
-                                        </div>
-                                    </div>
-                                    
-                                    <div className="flex items-center gap-2 self-start sm:self-center bg-blue-50 text-blue-900 px-3 py-1.5 rounded-lg border border-blue-100 shrink-0">
-                                        <span className="text-lg">⏰</span>
-                                        <span className="font-bold text-sm whitespace-nowrap tracking-wide">
-                                            {formatTime(task.startTime)} - {formatTime(task.endTime)}
-                                        </span>
                                     </div>
                                 </div>
                             );
