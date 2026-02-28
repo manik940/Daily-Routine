@@ -63,25 +63,37 @@ export default function DashboardLayout({ children, hideBackButton = false }: { 
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
-      {/* Header - Only show on Dashboard */}
-      {isDashboard && (
-        <header className="bg-white shadow-sm px-4 py-3 flex justify-between items-center sticky top-0 z-20">
-            {/* Left: Menu Button */}
-            <div className="w-10 flex justify-start">
-                <button onClick={() => setIsSidebarOpen(true)} className="p-2 hover:bg-gray-100 rounded-full">
-                    <Menu size={24} className="text-gray-700" />
-                </button>
-            </div>
+      {/* Header - Show on Dashboard OR show Back Button on other pages */}
+      {(isDashboard || (!isDashboard && !hideBackButton)) && (
+        <header className="bg-white shadow-sm px-4 py-3 flex items-center sticky top-0 z-20 h-16">
+            {isDashboard ? (
+                <>
+                    {/* Left: Menu Button */}
+                    <div className="w-10 flex justify-start">
+                        <button onClick={() => setIsSidebarOpen(true)} className="p-2 hover:bg-gray-100 rounded-full">
+                            <Menu size={24} className="text-gray-700" />
+                        </button>
+                    </div>
 
-            {/* Center: Title */}
-            <h1 className={`text-xl font-bold text-center ${getThemeTextColor()}`}>{t('app_name')}</h1>
-            
-            {/* Right: Profile */}
-            <div className="w-10 flex justify-end">
-                <Link to="/profile">
-                    <UserAvatar name={userData?.name} src={userData?.photoURL} size="md" />
-                </Link>
-            </div>
+                    {/* Center: Title */}
+                    <h1 className={`flex-1 text-xl font-bold text-center ${getThemeTextColor()}`}>{t('app_name')}</h1>
+                    
+                    {/* Right: Profile */}
+                    <div className="w-10 flex justify-end">
+                        <Link to="/profile">
+                            <UserAvatar name={userData?.name} src={userData?.photoURL} size="md" />
+                        </Link>
+                    </div>
+                </>
+            ) : (
+                <button 
+                    onClick={() => navigate(-1)} 
+                    className={`p-2 rounded-full hover:bg-gray-100 inline-flex items-center gap-2 font-bold transition-colors ${getThemeTextColor()}`}
+                >
+                    <ArrowLeft size={20} />
+                    <span>{t("back")}</span>
+                </button>
+            )}
         </header>
       )}
 
@@ -154,16 +166,6 @@ export default function DashboardLayout({ children, hideBackButton = false }: { 
 
       {/* Main Content */}
       <main className="flex-1 p-4 pb-20 overflow-y-auto relative">
-        {/* Back Button inside Content Area (Not on Dashboard) */}
-        {!isDashboard && !hideBackButton && (
-            <button 
-                onClick={() => navigate(-1)} 
-                className={`mb-4 p-2 rounded-full hover:bg-gray-100 inline-flex items-center gap-2 font-medium transition-colors ${getThemeTextColor()}`}
-            >
-                <ArrowLeft size={20} />
-                <span>{t("back")}</span>
-            </button>
-        )}
         {children}
       </main>
 

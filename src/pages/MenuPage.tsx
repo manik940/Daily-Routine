@@ -33,18 +33,10 @@ export default function MenuPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col font-sans">
-      {/* Header */}
-      <header className="bg-white shadow-sm px-4 py-3 flex items-center gap-3 sticky top-0 z-20">
-        <button onClick={() => navigate(-1)} className="p-2 hover:bg-gray-100 rounded-full text-gray-600">
-            <ArrowLeft size={24} />
-        </button>
-        <h1 className="text-xl font-bold text-gray-800">{t("menu")}</h1>
-      </header>
-
-      <main className="flex-1 p-4 pb-24 overflow-y-auto">
+    <DashboardLayout>
+      <div className="max-w-md mx-auto">
         {/* Profile Card */}
-        <div className="bg-white p-4 rounded-xl shadow-sm mb-6 flex items-center gap-4 border border-gray-100" onClick={() => navigate('/profile')}>
+        <div className="bg-white p-4 rounded-2xl shadow-sm mb-6 flex items-center gap-4 border border-gray-100" onClick={() => navigate('/profile')}>
             <UserAvatar name={userData?.name} src={userData?.photoURL} size="lg" />
             <div className="flex-1">
                 <h2 className="font-bold text-lg text-gray-800">{userData?.name || "User"}</h2>
@@ -60,7 +52,7 @@ export default function MenuPage() {
                 <Link 
                     key={item.path} 
                     to={item.path}
-                    className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 flex flex-col items-center justify-center gap-3 hover:bg-gray-50 transition-colors active:scale-95"
+                    className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100 flex flex-col items-center justify-center gap-3 hover:bg-gray-50 transition-colors active:scale-95"
                 >
                     <div className={`w-12 h-12 rounded-full ${item.color} flex items-center justify-center text-2xl`}>
                         {item.emoji}
@@ -72,27 +64,12 @@ export default function MenuPage() {
 
         <button 
             onClick={handleLogout}
-            className="w-full mt-8 bg-red-50 text-red-600 py-3 rounded-xl font-semibold flex items-center justify-center gap-2 border border-red-100"
+            className="w-full mt-8 bg-red-50 text-red-600 py-4 rounded-2xl font-bold flex items-center justify-center gap-2 border border-red-100"
         >
             <LogOut size={20} />
             {t('logout')}
         </button>
-      </main>
-
-      {/* Bottom Nav */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 flex justify-around py-2 px-4 z-10 pb-safe">
-        <Link 
-            to="/dashboard" 
-            className="flex flex-col items-center p-2 rounded-lg text-gray-500"
-        >
-            <Home size={24} />
-            <span className="text-xs mt-1">{t("home")}</span>
-        </Link>
-        <div className="flex flex-col items-center p-2 rounded-lg text-emerald-600">
-            <Grid size={24} />
-            <span className="text-xs mt-1">{t("menu")}</span>
-        </div>
-      </nav>
-    </div>
+      </div>
+    </DashboardLayout>
   );
 }

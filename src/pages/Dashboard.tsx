@@ -368,8 +368,8 @@ const SquareEmojiCard = ({ to, title, emoji, theme, isAction }: any) => {
         >
             <span className="text-3xl filter drop-shadow-sm group-hover:scale-110 transition-transform duration-300">{emoji}</span>
             
-            <div className="text-center w-full">
-                <p className="font-bold text-gray-700 text-xs leading-tight mb-0.5">{title}</p>
+            <div className="text-center w-full px-1">
+                <p className="font-bold text-gray-700 text-sm sm:text-base leading-tight mb-0.5">{title}</p>
             </div>
         </Link>
     );

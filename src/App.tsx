@@ -27,7 +27,7 @@ import MenuPage from './pages/MenuPage';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { currentUser, loading } = useAuth();
-  if (loading) return <div className="flex items-center justify-center h-screen">Loading...</div>;
+  if (loading) return null; // Let the splash screen handle it
   if (!currentUser) return <Navigate to="/" />;
   return <>{children}</>;
 }

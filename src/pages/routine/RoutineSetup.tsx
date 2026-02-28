@@ -188,9 +188,6 @@ export default function RoutineSetup() {
   const renderList = () => (
     <div className="space-y-6">
         <div className="flex items-center gap-3 mb-6">
-            <button onClick={() => navigate(-1)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-                <ArrowLeft size={24} className="text-gray-600" />
-            </button>
             <h2 className="text-xl font-bold text-gray-800">{language === 'bn' ? "পড়ার রুটিন" : "Reading Routine"}</h2>
         </div>
 
@@ -245,9 +242,6 @@ export default function RoutineSetup() {
   const renderTitle = () => (
     <div className="space-y-6">
         <div className="flex items-center gap-3 mb-8">
-            <button onClick={() => setView("list")} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-                <ArrowLeft size={24} className="text-gray-600" />
-            </button>
             <h2 className="text-xl font-bold text-gray-800">{language === 'bn' ? "রুটিনের নাম" : "Routine Title"}</h2>
         </div>
 
@@ -277,9 +271,6 @@ export default function RoutineSetup() {
   const renderWeekly = () => (
     <div className="space-y-6">
         <div className="flex items-center gap-3 mb-6">
-            <button onClick={() => setView("title")} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-                <ArrowLeft size={24} className="text-gray-600" />
-            </button>
             <div className="flex-1">
                 <h2 className="text-xl font-bold text-gray-800">{newRoutineTitle}</h2>
                 <p className="text-sm text-gray-500">{language === 'bn' ? "সপ্তাহের রুটিন সেটআপ" : "Weekly Routine Setup"}</p>
@@ -332,9 +323,6 @@ export default function RoutineSetup() {
   const renderDayEdit = () => (
     <div className="space-y-6 pb-24">
         <div className="flex items-center gap-3 mb-6">
-            <button onClick={() => setView("weekly")} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-                <ArrowLeft size={24} className="text-gray-600" />
-            </button>
             <h2 className="text-xl font-bold text-gray-800">
                 {language === 'bn' ? BANGLA_DAYS[currentDay] : currentDay.charAt(0).toUpperCase() + currentDay.slice(1)}
             </h2>
@@ -434,9 +422,6 @@ export default function RoutineSetup() {
   const renderPreview = () => (
     <div className="space-y-6 pb-32">
         <div className="flex items-center gap-3 mb-6">
-            <button onClick={() => setView("weekly")} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-                <ArrowLeft size={24} className="text-gray-600" />
-            </button>
             <div className="flex-1">
                 <h2 className="text-xl font-bold text-gray-800">{newRoutineTitle}</h2>
                 <p className="text-sm text-gray-500">{language === 'bn' ? "পূর্ণ রুটিন প্রিভিউ" : "Full Routine Preview"}</p>

@@ -236,9 +236,6 @@ export default function TodoSetup() {
   const renderList = () => (
     <div className="space-y-6">
         <div className="flex items-center gap-3 mb-6">
-            <button onClick={() => navigate(-1)} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-                <ArrowLeft size={24} className="text-gray-600" />
-            </button>
             <h2 className="text-xl font-bold text-gray-800">{language === 'bn' ? "টুডু লিস্ট" : "To-Do List"}</h2>
         </div>
 
@@ -295,9 +292,6 @@ export default function TodoSetup() {
   const renderTitle = () => (
     <div className="space-y-6">
         <div className="flex items-center gap-3 mb-8">
-            <button onClick={() => setView("list")} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-                <ArrowLeft size={24} className="text-gray-600" />
-            </button>
             <h2 className="text-xl font-bold text-gray-800">{language === 'bn' ? "টুডু লিস্টের নাম" : "To-Do List Title"}</h2>
         </div>
 
@@ -327,9 +321,6 @@ export default function TodoSetup() {
   const renderWeekly = () => (
     <div className="space-y-6">
         <div className="flex items-center gap-3 mb-6">
-            <button onClick={() => setView("title")} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-                <ArrowLeft size={24} className="text-gray-600" />
-            </button>
             <div className="flex-1">
                 <h2 className="text-xl font-bold text-gray-800">{newTodoTitle}</h2>
                 <p className="text-sm text-gray-500">{language === 'bn' ? "সপ্তাহের টুডু লিস্ট সেটআপ" : "Weekly To-Do Setup"}</p>
@@ -382,9 +373,6 @@ export default function TodoSetup() {
   const renderDayEdit = () => (
     <div className="space-y-6 pb-24">
         <div className="flex items-center gap-3 mb-6">
-            <button onClick={() => setView("weekly")} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-                <ArrowLeft size={24} className="text-gray-600" />
-            </button>
             <h2 className="text-xl font-bold text-gray-800">
                 {language === 'bn' ? BANGLA_DAYS[currentDay] : currentDay.charAt(0).toUpperCase() + currentDay.slice(1)}
             </h2>
@@ -503,9 +491,6 @@ export default function TodoSetup() {
   const renderPreview = () => (
     <div className="space-y-6 pb-32">
         <div className="flex items-center gap-3 mb-6">
-            <button onClick={() => setView("weekly")} className="p-2 hover:bg-gray-100 rounded-full transition-colors">
-                <ArrowLeft size={24} className="text-gray-600" />
-            </button>
             <div className="flex-1">
                 <h2 className="text-xl font-bold text-gray-800">{newTodoTitle}</h2>
                 <p className="text-sm text-gray-500">{language === 'bn' ? "পূর্ণ টুডু লিস্ট প্রিভিউ" : "Full To-Do Preview"}</p>
