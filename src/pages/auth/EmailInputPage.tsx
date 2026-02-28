@@ -1,11 +1,11 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { fetchSignInMethodsForEmail } from "firebase/auth";
+import { fetchSignInMethodsForEmail, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification } from "firebase/auth";
 import { ref, query, orderByChild, equalTo, get } from "firebase/database";
 import { auth, db } from "../../firebase";
 import AuthLayout from "../../components/AuthLayout";
 import { useLanguage } from "../../contexts/LanguageContext";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, ArrowLeft } from "lucide-react";
 
 export default function EmailInputPage() {
   const { t } = useLanguage();
@@ -13,6 +13,24 @@ export default function EmailInputPage() {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [step, setStep] = useState<"email" | "verify">("email");
+  const [isVerified, setIsVerified] = useState(false);
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (step === "verify" && !isVerified) {
+      interval = setInterval(async () => {
+        if (auth.currentUser) {
+          await auth.currentUser.reload();
+          if (auth.currentUser.emailVerified) {
+            setIsVerified(true);
+            clearInterval(interval);
+          }
+        }
+      }, 3000);
+    }
+    return () => clearInterval(interval);
+  }, [step, isVerified]);
 
   const handleNext = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,38 +40,55 @@ export default function EmailInputPage() {
 
     try {
       // 1. Check Realtime Database first (Most reliable for our app structure)
-      // We check if any user has this email in the 'users' node
       const usersRef = ref(db, 'users');
       const q = query(usersRef, orderByChild('email'), equalTo(email));
       const snapshot = await get(q);
 
       if (snapshot.exists()) {
         // User found in database -> Go to Password Page (Login)
-        console.log("User found in DB, redirecting to password page");
         navigate("/auth/password", { state: { email } });
       } else {
-        // User NOT found in database -> Go to Register Page
-        console.log("User not found in DB, redirecting to register page");
-        navigate("/auth/register", { state: { email } });
+        // User NOT found in database -> Handle Verification Flow
+        const tempPassword = "TempPassword123!@#";
+        try {
+          // Try to sign in with temp password (in case they abandoned registration before)
+          const userCredential = await signInWithEmailAndPassword(auth, email, tempPassword);
+          if (userCredential.user.emailVerified) {
+            navigate("/auth/register", { state: { email } });
+          } else {
+            await sendEmailVerification(userCredential.user);
+            setStep("verify");
+          }
+        } catch (signInErr: any) {
+          if (signInErr.code === 'auth/user-not-found' || signInErr.code === 'auth/invalid-credential') {
+            try {
+              // Create new user with temp password
+              const newUserCredential = await createUserWithEmailAndPassword(auth, email, tempPassword);
+              await sendEmailVerification(newUserCredential.user);
+              setStep("verify");
+            } catch (createErr: any) {
+              if (createErr.code === 'auth/email-already-in-use') {
+                // They have an account with a real password but aren't in DB.
+                // This is a rare edge case, send to password page to login.
+                navigate("/auth/password", { state: { email } });
+              } else {
+                setError("An error occurred. Please try again.");
+                console.error(createErr);
+              }
+            }
+          } else if (signInErr.code === 'auth/wrong-password') {
+             // They have a real password but aren't in DB.
+             navigate("/auth/password", { state: { email } });
+          } else {
+             setError("An error occurred. Please try again.");
+             console.error(signInErr);
+          }
+        }
       }
     } catch (err: any) {
       console.error("Email check error:", err);
-      // If DB check fails (e.g. permission issue), try Auth check as fallback
-      try {
-        const methods = await fetchSignInMethodsForEmail(auth, email);
-        if (methods.length > 0) {
-            navigate("/auth/password", { state: { email } });
-        } else {
-            navigate("/auth/register", { state: { email } });
-        }
-      } catch (authErr) {
-        // If everything fails, default to password page to not block potential users
-        // or show error. Let's show error to be safe or default to register?
-        // Safest default for UX is usually register if we are unsure, or password.
-        // Let's default to Register if we really can't tell, assuming new user.
-        // But actually, let's just log it and maybe try password page as it handles "user not found" error too.
-        navigate("/auth/password", { state: { email } });
-      }
+      // Fallback
+      navigate("/auth/password", { state: { email } });
     } finally {
       setLoading(false);
     }
@@ -62,32 +97,64 @@ export default function EmailInputPage() {
   return (
     <AuthLayout>
       <div className="flex-1 flex flex-col p-6 max-w-md mx-auto w-full justify-center">
-        <h2 className="text-2xl font-bold mb-6 text-center">{t('login_register')}</h2>
-        
-        <form onSubmit={handleNext} className="space-y-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-            <input
-              type="email"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder={t('email_placeholder')}
-              className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all"
-            />
+        {step === "email" && (
+          <>
+            <h2 className="text-2xl font-bold mb-6 text-center">{t('login_register')}</h2>
+            <form onSubmit={handleNext} className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder={t('email_placeholder')}
+                  className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-emerald-500 focus:border-transparent outline-none transition-all"
+                />
+              </div>
+
+              {error && <p className="text-red-500 text-sm">{error}</p>}
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-6 rounded-lg shadow-md flex items-center justify-center gap-2 disabled:opacity-70"
+              >
+                {loading ? "Checking..." : t('next')}
+                {!loading && <ArrowRight size={20} />}
+              </button>
+            </form>
+          </>
+        )}
+
+        {step === "verify" && (
+          <div className="space-y-6">
+            <div className="flex items-center mb-6">
+              <button 
+                onClick={() => setStep("email")}
+                className="p-2 hover:bg-gray-100 rounded-full mr-2"
+              >
+                <ArrowLeft size={24} className="text-gray-600" />
+              </button>
+              <h2 className="text-xl font-bold text-gray-800">
+                ইমেইল ভেরিফিকেশন
+              </h2>
+            </div>
+            
+            <div className="text-center">
+              <p className="text-gray-700 mb-6">
+                ইউজারটির ইমেইলে একটি ভেরিফিকেশন লিংক পাঠানো হয়েছে। দয়া করে আপনার ইমেইল চেক করুন এবং লিংকে ক্লিক করে ভেরিফাই করুন।
+              </p>
+              
+              <button
+                onClick={() => navigate("/auth/register", { state: { email } })}
+                className={`w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-6 rounded-lg shadow-md flex items-center justify-center gap-2 transition-opacity duration-300 ${isVerified ? 'opacity-100 visible' : 'opacity-0 invisible'}`}
+              >
+                এগিয়ে যান <ArrowRight size={20} />
+              </button>
+            </div>
           </div>
-
-          {error && <p className="text-red-500 text-sm">{error}</p>}
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-6 rounded-lg shadow-md flex items-center justify-center gap-2 disabled:opacity-70"
-          >
-            {loading ? "Checking..." : t('next')}
-            {!loading && <ArrowRight size={20} />}
-          </button>
-        </form>
+        )}
       </div>
     </AuthLayout>
   );

@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { createUserWithEmailAndPassword } from "firebase/auth";
+import { updatePassword } from "firebase/auth";
 import { ref, set } from "firebase/database";
 import { auth, db } from "../../firebase";
 import AuthLayout from "../../components/AuthLayout";
@@ -32,8 +32,13 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  useEffect(() => {
+    if (!email || !auth.currentUser) {
+      navigate("/auth/email");
+    }
+  }, [email, navigate]);
+
   if (!email) {
-    navigate("/auth/email");
     return null;
   }
 
@@ -56,13 +61,16 @@ export default function RegisterPage() {
     setError("");
 
     try {
-      // Create User
-      const userCredential = await createUserWithEmailAndPassword(auth, email, formData.password);
-      const user = userCredential.user;
+      if (!auth.currentUser) {
+        throw new Error("User session lost. Please try again.");
+      }
+
+      // Update password from the temporary one to the user's chosen one
+      await updatePassword(auth.currentUser, formData.password);
+      
+      const user = auth.currentUser;
       const uniqueId = generateUniqueId();
       
-      // We don't use ui-avatars anymore, we use UserAvatar component with fallback
-      // But we can still save it if needed, or just leave it empty
       const photoURL = ""; 
 
       const userData = {
