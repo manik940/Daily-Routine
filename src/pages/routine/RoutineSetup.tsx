@@ -73,7 +73,12 @@ export default function RoutineSetup() {
 
   const handleDayClick = (day: string) => {
     setCurrentDay(day);
-    const existing = routineData[day] || [];
+    let existing = routineData[day] || [];
+    if (!Array.isArray(existing)) {
+        existing = Object.values(existing).filter(Boolean);
+    } else {
+        existing = existing.filter(Boolean);
+    }
     setDaySubjects(existing);
     setSubjectCount(existing.length || 0);
     setIsSameAsPrevious(false);
@@ -118,8 +123,14 @@ export default function RoutineSetup() {
       if (currentIndex > 0) {
           const prevDay = DAYS[currentIndex - 1];
           if (routineData[prevDay]) {
-              setDaySubjects(JSON.parse(JSON.stringify(routineData[prevDay])));
-              setSubjectCount(routineData[prevDay].length);
+              let prevData = routineData[prevDay];
+              if (!Array.isArray(prevData)) {
+                  prevData = Object.values(prevData).filter(Boolean);
+              } else {
+                  prevData = prevData.filter(Boolean);
+              }
+              setDaySubjects(JSON.parse(JSON.stringify(prevData)));
+              setSubjectCount(prevData.length);
           } else {
               alert(language === 'bn' ? "আগের দিনের কোনো রুটিন নেই" : "No routine for previous day");
               setIsSameAsPrevious(false);
@@ -434,7 +445,12 @@ export default function RoutineSetup() {
 
         <div className="space-y-6">
             {DAYS.map(day => {
-                const subjects = routineData[day] || [];
+                let subjects = routineData[day] || [];
+                if (!Array.isArray(subjects)) {
+                    subjects = Object.values(subjects).filter(Boolean);
+                } else {
+                    subjects = subjects.filter(Boolean);
+                }
                 if (subjects.length === 0) return null;
                 
                 return (

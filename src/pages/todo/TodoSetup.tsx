@@ -98,7 +98,12 @@ export default function TodoSetup() {
   const handleDayClick = async (day: string) => {
     setCurrentDay(day);
     await fetchRoutineForDay(day);
-    const existing = todoData[day] || [];
+    let existing = todoData[day] || [];
+    if (!Array.isArray(existing)) {
+        existing = Object.values(existing).filter(Boolean);
+    } else {
+        existing = existing.filter(Boolean);
+    }
     setDayTasks(existing);
     setIsSameAsPrevious(false);
     setView("day_edit");
@@ -133,7 +138,13 @@ export default function TodoSetup() {
       if (currentIndex > 0) {
           const prevDay = DAYS[currentIndex - 1];
           if (todoData[prevDay]) {
-              setDayTasks(JSON.parse(JSON.stringify(todoData[prevDay])));
+              let prevData = todoData[prevDay];
+              if (!Array.isArray(prevData)) {
+                  prevData = Object.values(prevData).filter(Boolean);
+              } else {
+                  prevData = prevData.filter(Boolean);
+              }
+              setDayTasks(JSON.parse(JSON.stringify(prevData)));
           } else {
               alert(language === 'bn' ? "আগের দিনের কোনো কাজ নেই" : "No tasks for previous day");
               setIsSameAsPrevious(false);
@@ -503,7 +514,12 @@ export default function TodoSetup() {
 
         <div className="space-y-6">
             {DAYS.map(day => {
-                const tasks = todoData[day] || [];
+                let tasks = todoData[day] || [];
+                if (!Array.isArray(tasks)) {
+                    tasks = Object.values(tasks).filter(Boolean);
+                } else {
+                    tasks = tasks.filter(Boolean);
+                }
                 if (tasks.length === 0) return null;
                 
                 return (

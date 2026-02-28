@@ -22,7 +22,12 @@ export default function TomorrowGoal() {
       const goalRef = ref(db, `goals/${currentUser.uid}/${tomorrow}`);
       onValue(goalRef, (snapshot) => {
         if (snapshot.exists()) {
-          setGoals(snapshot.val().items || [""]);
+          const data = snapshot.val();
+          let items = data.items || [""];
+          if (!Array.isArray(items)) {
+              items = Object.values(items);
+          }
+          setGoals(items);
         }
       });
     }

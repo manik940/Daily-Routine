@@ -35,8 +35,10 @@ export default function Dashboard() {
         const list: any[] = [];
         Object.values(data).forEach((routine: any) => {
           if (routine.days && routine.days[today]) {
-            const validRoutines = Object.values(routine.days[today]).filter(Boolean);
-            list.push(...validRoutines);
+            const daySubjects = Array.isArray(routine.days[today]) 
+              ? routine.days[today] 
+              : Object.values(routine.days[today]);
+            list.push(...daySubjects.filter(Boolean));
           }
         });
         setTodayRoutine(list);
@@ -53,8 +55,10 @@ export default function Dashboard() {
         const list: any[] = [];
         Object.values(data).forEach((todo: any) => {
           if (todo.days && todo.days[today]) {
-            const validTodos = Object.values(todo.days[today]).filter(Boolean);
-            list.push(...validTodos);
+            const dayTasks = Array.isArray(todo.days[today]) 
+              ? todo.days[today] 
+              : Object.values(todo.days[today]);
+            list.push(...dayTasks.filter(Boolean));
           }
         });
         setTodayTodos(list);
@@ -188,9 +192,16 @@ const CurrentTaskBox = ({ todayTodos, theme }: { todayTodos: any[], theme: strin
   const [notifiedTaskId, setNotifiedTaskId] = useState<string | null>(null);
 
   useEffect(() => {
-    // Request notification permission
-    if ("Notification" in window && Notification.permission !== "granted" && Notification.permission !== "denied") {
-      Notification.requestPermission();
+    // Request notification permission safely
+    try {
+      if ("Notification" in window && Notification.permission !== "granted" && Notification.permission !== "denied") {
+        const promise = Notification.requestPermission();
+        if (promise && promise.catch) {
+            promise.catch(e => console.warn("Notification permission error:", e));
+        }
+      }
+    } catch (e) {
+      console.warn("Notification API error:", e);
     }
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
@@ -276,12 +287,16 @@ const CurrentTaskBox = ({ todayTodos, theme }: { todayTodos: any[], theme: strin
 
   useEffect(() => {
     if (currentTask && currentTask.id !== notifiedTaskId) {
-      // Trigger notification
-      if ("Notification" in window && Notification.permission === "granted") {
-        new Notification("নতুন কাজ শুরু হয়েছে! 🎯", {
-          body: `${currentTask.task}\nসময়: ${formatTime(currentTask.startTime)} - ${formatTime(currentTask.endTime)}\nমোট: ${totalDurationStr}`,
-          icon: "/icon.png" // Fallback icon
-        });
+      // Trigger notification safely
+      try {
+        if ("Notification" in window && Notification.permission === "granted") {
+          new Notification("নতুন কাজ শুরু হয়েছে! 🎯", {
+            body: `${currentTask.task}\nসময়: ${formatTime(currentTask.startTime)} - ${formatTime(currentTask.endTime)}\nমোট: ${totalDurationStr}`,
+            icon: "/icon.png" // Fallback icon
+          });
+        }
+      } catch (e) {
+        console.warn("Notification creation error:", e);
       }
       setNotifiedTaskId(currentTask.id);
     }

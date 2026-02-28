@@ -95,11 +95,14 @@ export default function TodayTodo() {
           const list: any[] = [];
           Object.values(data).forEach((todo: any) => {
             if (todo.days && todo.days[currentDay]) {
-                const validTasks = Object.values(todo.days[currentDay]).filter(Boolean);
+                const dayTasks = Array.isArray(todo.days[currentDay])
+                  ? todo.days[currentDay]
+                  : Object.values(todo.days[currentDay]);
+                  
                 list.push({
                     id: todo.id || Math.random().toString(), // Ensure ID exists or fallback
                     title: todo.title,
-                    tasks: validTasks
+                    tasks: dayTasks.filter(Boolean)
                 });
             }
           });
