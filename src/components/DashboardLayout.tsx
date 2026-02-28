@@ -11,7 +11,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import UserAvatar from "./UserAvatar";
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+export default function DashboardLayout({ children, hideBackButton = false }: { children: React.ReactNode, hideBackButton?: boolean }) {
   const { userData } = useAuth();
   const { t } = useLanguage();
   const { theme } = useTheme();
@@ -154,7 +154,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       {/* Main Content */}
       <main className="flex-1 p-4 pb-20 overflow-y-auto relative">
         {/* Back Button inside Content Area (Not on Dashboard) */}
-        {!isDashboard && (
+        {!isDashboard && !hideBackButton && (
             <button 
                 onClick={() => navigate(-1)} 
                 className={`mb-4 p-2 rounded-full hover:bg-gray-100 inline-flex items-center gap-2 font-medium transition-colors ${getThemeTextColor()}`}
