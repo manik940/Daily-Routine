@@ -1,6 +1,5 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import OneSignal from 'react-onesignal';
 import { Toaster } from 'react-hot-toast';
 import { useAuth } from './contexts/AuthContext';
 import LandingPage from './pages/auth/LandingPage';
@@ -34,21 +33,6 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-  useEffect(() => {
-    const runOneSignal = async () => {
-      try {
-        await OneSignal.init({
-          appId: "99bf2974-08db-4721-9159-13469eaa3440",
-          allowLocalhostAsSecureOrigin: true,
-        });
-        OneSignal.Slidedown.promptPush();
-      } catch (error) {
-        console.error("OneSignal Init Error:", error);
-      }
-    };
-    runOneSignal();
-  }, []);
-
   return (
     <Router>
       <Toaster position="top-center" toastOptions={{ duration: 3000 }} />

@@ -15,7 +15,6 @@ export default function AppInfo() {
             <InfoItem label="App Language" value="BN + EN" />
             <InfoItem label="App Theme" value="Default" />
             <InfoItem label="Database Provider" value="Firebase" />
-            <InfoItem label="Notification Pushed By" value="OneSignal" />
             <InfoItem label="Structure and Design by" value="MD Manik Hossen" />
             <InfoItem label="Developed by" value="MD Manik Hossen" />
             <InfoItem label="Coding and function setup by" value="Ai" />
