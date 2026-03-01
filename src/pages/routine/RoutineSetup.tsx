@@ -188,6 +188,12 @@ export default function RoutineSetup() {
   const renderList = () => (
     <div className="space-y-6">
         <div className="flex items-center gap-3 mb-6">
+            <button 
+                onClick={() => navigate("/")}
+                className="p-2 -ml-2 text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
+            >
+                <ArrowLeft size={20} />
+            </button>
             <h2 className="text-xl font-bold text-gray-800">{language === 'bn' ? "পড়ার রুটিন" : "Reading Routine"}</h2>
         </div>
 

@@ -186,11 +186,24 @@ export default function Dashboard() {
   );
 }
 
+// Persistent notification trackers (survive navigation, reset on page reload)
+let lastNotifiedTaskId: string | null = null;
+let lastNotifiedRoutineIds: Set<string> = new Set();
+
 // Current Task Box Component
 const CurrentTaskBox = ({ todayTodos, todayRoutine, theme }: { todayTodos: any[], todayRoutine: any[], theme: string }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [notifiedTaskId, setNotifiedTaskId] = useState<string | null>(null);
-  const [notifiedRoutineIds, setNotifiedRoutineIds] = useState<Set<string>>(new Set());
+  const [notifiedTaskId, setNotifiedTaskId] = useState<string | null>(lastNotifiedTaskId);
+  const [notifiedRoutineIds, setNotifiedRoutineIds] = useState<Set<string>>(lastNotifiedRoutineIds);
+
+  // Update global trackers whenever state changes to persist across navigation
+  useEffect(() => {
+    lastNotifiedTaskId = notifiedTaskId;
+  }, [notifiedTaskId]);
+
+  useEffect(() => {
+    lastNotifiedRoutineIds = notifiedRoutineIds;
+  }, [notifiedRoutineIds]);
 
   useEffect(() => {
     // Request notification permission using OneSignal if available, otherwise native
