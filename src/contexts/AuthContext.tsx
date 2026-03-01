@@ -8,6 +8,7 @@ interface UserData {
   email: string;
   role: string;
   class: string;
+  roll?: string;
   group?: string;
   sscYear?: string;
   section: string;

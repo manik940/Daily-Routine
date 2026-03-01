@@ -126,7 +126,7 @@ export default function Dashboard() {
     const checkStatus = async () => {
       try {
         const hasNotification = typeof window !== 'undefined' && "Notification" in window;
-        const permission = hasNotification ? (window as any).Notification.permission : "denied";
+        const permission = hasNotification ? (window as any).Notification?.permission : "denied";
         
         let sessionUnlocked = false;
         try {
@@ -191,7 +191,7 @@ export default function Dashboard() {
 
       // 3. Test Notification
       const hasNotification = typeof window !== 'undefined' && "Notification" in window;
-      if (hasNotification && (window as any).Notification && (window as any).Notification.permission === "granted") {
+      if (hasNotification && (window as any).Notification && (window as any).Notification?.permission === "granted") {
         const title = "নোটিফিকেশন সেটআপ সফল! ✅";
         const options = {
           body: "আপনার ফোনে এখন থেকে সব কাজের নোটিফিকেশন পাওয়া যাবে।",
@@ -228,7 +228,7 @@ export default function Dashboard() {
       
       // Only hide if both are good
       try {
-        if (typeof window !== 'undefined' && (window as any).Notification && (window as any).Notification.permission === "granted") {
+        if (typeof window !== 'undefined' && (window as any).Notification && (window as any).Notification?.permission === "granted") {
           setShowSetup(false);
         }
       } catch (e) {}
@@ -311,7 +311,7 @@ export default function Dashboard() {
                 onClick={async () => {
                   try {
                     const hasNotification = typeof window !== 'undefined' && "Notification" in window;
-                    if (hasNotification && (window as any).Notification && (window as any).Notification.permission === "granted") {
+                    if (hasNotification && (window as any).Notification && (window as any).Notification?.permission === "granted") {
                       const options = { 
                         body: "এটি একটি টেস্ট নোটিফিকেশন", 
                         icon: 'https://picsum.photos/seed/app/192/192',
@@ -564,7 +564,7 @@ const CurrentTaskBox = ({ todayTodos, todayRoutine, theme }: { todayTodos: any[]
           });
         } else if ("Notification" in window) {
           const Notification = (window as any).Notification;
-          if (Notification.permission !== "granted" && Notification.permission !== "denied") {
+          if (Notification && Notification.permission !== "granted" && Notification.permission !== "denied") {
             try {
               await Notification.requestPermission();
             } catch (e) {}

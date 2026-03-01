@@ -3,6 +3,7 @@ import { ref, onValue, set, get } from "firebase/database";
 import { db } from "../../firebase";
 import { useAuth } from "../../contexts/AuthContext";
 import { useLanguage } from "../../contexts/LanguageContext";
+import { getBanglaDate } from "../../utils/timeUtils";
 import DashboardLayout from "../../components/DashboardLayout";
 import { format } from "date-fns";
 import { Target, CheckCircle2, Check } from "lucide-react";
@@ -40,34 +41,14 @@ export default function TodayGoal() {
 
   useEffect(() => {
     if (currentUser && isLoaded) {
-      const storageKey = `completed_goal_${currentUser.uid}_${todayStr}`;
-      localStorage.setItem(storageKey, JSON.stringify(completedTasks));
+      try {
+        const storageKey = `completed_goal_${currentUser.uid}_${todayStr}`;
+        localStorage.setItem(storageKey, JSON.stringify(completedTasks));
+      } catch (e) {
+        console.warn("localStorage set error:", e);
+      }
     }
   }, [completedTasks, currentUser, todayStr, isLoaded]);
-
-  // Helper to format date in Bangla: "Day, Date Month Year"
-  const getBanglaDate = () => {
-    const date = new Date();
-    const day = date.getDate();
-    const month = date.getMonth();
-    const dayOfWeek = date.getDay();
-    const year = date.getFullYear();
-
-    const banglaMonths = [
-        "জানুয়ারি", "ফেব্রুয়ারি", "মার্চ", "এপ্রিল", "মে", "জুন",
-        "জুলাই", "আগস্ট", "সেপ্টেম্বর", "অক্টোবর", "নভেম্বর", "ডিসেম্বর"
-    ];
-    
-    const banglaDays = [
-        "রবিবার", "সোমবার", "মঙ্গলবার", "বুধবার", "বৃহস্পতিবার", "শুক্রবার", "শনিবার"
-    ];
-
-    const banglaDigits = (num: number) => {
-        return num.toString().replace(/\d/g, (d) => "০১২৩৪৫৬৭৮৯"[parseInt(d)]);
-    };
-
-    return `${banglaDays[dayOfWeek]}, ${banglaDigits(day)} ${banglaMonths[month]} ${banglaDigits(year)}`;
-  };
 
   const banglaDateString = getBanglaDate();
 
