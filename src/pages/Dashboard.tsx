@@ -192,17 +192,23 @@ const CurrentTaskBox = ({ todayTodos, theme }: { todayTodos: any[], theme: strin
   const [notifiedTaskId, setNotifiedTaskId] = useState<string | null>(null);
 
   useEffect(() => {
-    // Request notification permission safely
-    try {
-      if ("Notification" in window && Notification.permission !== "granted" && Notification.permission !== "denied") {
-        const promise = Notification.requestPermission();
-        if (promise && promise.catch) {
-            promise.catch(e => console.warn("Notification permission error:", e));
+    // Request notification permission using OneSignal if available, otherwise native
+    const requestPermission = async () => {
+      try {
+        const win = window as any;
+        if (win.OneSignalDeferred) {
+          win.OneSignalDeferred.push(async (OneSignal: any) => {
+            await OneSignal.Notifications.requestPermission();
+          });
+        } else if ("Notification" in window && Notification.permission !== "granted" && Notification.permission !== "denied") {
+          await Notification.requestPermission();
         }
+      } catch (e) {
+        console.warn("Notification permission error:", e);
       }
-    } catch (e) {
-      console.warn("Notification API error:", e);
-    }
+    };
+
+    requestPermission();
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
@@ -285,22 +291,70 @@ const CurrentTaskBox = ({ todayTodos, theme }: { todayTodos: any[], theme: strin
     }
   }
 
+  // Notification Logic
   useEffect(() => {
-    if (currentTask && currentTask.id !== notifiedTaskId) {
-      // Trigger notification safely
+    const closeNotification = async () => {
+      if ("serviceWorker" in navigator) {
+        const registration = await navigator.serviceWorker.ready;
+        const notifications = await registration.getNotifications({ tag: 'current-task-notification' });
+        notifications.forEach(n => n.close());
+      }
+    };
+
+    if (!currentTask || todayTodos.length === 0) {
+      closeNotification();
+      return;
+    }
+
+    const triggerNotification = async () => {
       try {
         if ("Notification" in window && Notification.permission === "granted") {
-          new Notification("নতুন কাজ শুরু হয়েছে! 🎯", {
-            body: `${currentTask.task}\nসময়: ${formatTime(currentTask.startTime)} - ${formatTime(currentTask.endTime)}\nমোট: ${totalDurationStr}`,
-            icon: "/icon.png" // Fallback icon
-          });
+          const title = "এই সময়ের কাজ 🕒";
+          const body = `কাজ: ${currentTask.task}\n` +
+                       `সময়সীমা: ${formatTime(currentTask.startTime)} - ${formatTime(currentTask.endTime)}\n` +
+                       `মোট সময়: ${totalDurationStr}\n` +
+                       `বাকি সময়: ${remainingTimeStr}`;
+          
+          const options: any = {
+            body: body,
+            tag: 'current-task-notification',
+            renotify: false,
+            icon: '/icon.png',
+            badge: '/icon.png',
+            silent: true,
+            dir: 'auto',
+            requireInteraction: true // Keep it visible on Android
+          };
+
+          // If it's a new task, make it loud and renotify
+          if (currentTask.id !== notifiedTaskId) {
+            options.silent = false;
+            options.renotify = true;
+            setNotifiedTaskId(currentTask.id);
+          }
+
+          // Use service worker to show notification for better background support on Android
+          if ("serviceWorker" in navigator) {
+            const registration = await navigator.serviceWorker.ready;
+            registration.showNotification(title, options);
+          } else {
+            new Notification(title, options);
+          }
         }
       } catch (e) {
-        console.warn("Notification creation error:", e);
+        console.warn("Notification trigger error:", e);
       }
-      setNotifiedTaskId(currentTask.id);
-    }
-  }, [currentTask, notifiedTaskId, totalDurationStr]);
+    };
+
+    // Initial trigger
+    triggerNotification();
+
+    // Update notification every minute to refresh the "Remaining Time"
+    const interval = setInterval(triggerNotification, 60000);
+    return () => {
+      clearInterval(interval);
+    };
+  }, [currentTask?.id, remainingTimeStr.split(':')[0], totalDurationStr, notifiedTaskId, todayTodos.length]);
 
   return (
     <div className="bg-white rounded-2xl p-5 mb-6 shadow-sm border border-gray-100 relative overflow-hidden">
