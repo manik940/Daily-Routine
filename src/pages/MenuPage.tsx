@@ -21,7 +21,6 @@ export default function MenuPage() {
   };
 
   const menuItems = [
-    { emoji: "🏠", label: t("home"), path: '/dashboard', color: "bg-blue-100 text-blue-600" },
     { emoji: "📖", label: t('routine_setup'), path: '/routine/setup', color: "bg-emerald-100 text-emerald-600" },
     { emoji: "📝", label: t('todo_setup'), path: '/todo/setup', color: "bg-purple-100 text-purple-600" },
     { emoji: "🎯", label: t('daily_goal_setup'), path: '/goal/setup', color: "bg-orange-100 text-orange-600" },
