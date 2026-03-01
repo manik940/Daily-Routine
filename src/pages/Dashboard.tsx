@@ -135,9 +135,13 @@ export default function Dashboard() {
     // Check if we need to show setup button
     const checkStatus = async () => {
       try {
-        const hasNotification = "Notification" in window;
+        const hasNotification = typeof window !== 'undefined' && "Notification" in window;
         const permission = hasNotification ? (window as any).Notification.permission : "denied";
-        const sessionUnlocked = sessionStorage.getItem('audioUnlocked') === 'true';
+        
+        let sessionUnlocked = false;
+        try {
+          sessionUnlocked = typeof sessionStorage !== 'undefined' && sessionStorage.getItem('audioUnlocked') === 'true';
+        } catch (e) {}
         
         // Show setup if permission not granted OR if audio not unlocked in this session
         if (permission !== "granted" || !sessionUnlocked) {
@@ -175,7 +179,7 @@ export default function Dashboard() {
       }
 
       // 2. Unlock Audio/Speech (Play a tiny silent sound)
-      if (window.speechSynthesis) {
+      if (typeof window !== 'undefined' && window.speechSynthesis) {
         try {
           window.speechSynthesis.cancel();
           // Use a space or very short text to unlock
@@ -184,7 +188,11 @@ export default function Dashboard() {
           utterance.volume = 0.1; 
           window.speechSynthesis.speak(utterance);
           
-          sessionStorage.setItem('audioUnlocked', 'true');
+          try {
+            if (typeof sessionStorage !== 'undefined') {
+              sessionStorage.setItem('audioUnlocked', 'true');
+            }
+          } catch (e) {}
           setAudioUnlocked(true);
         } catch (e) {
           console.warn("Speech unlock error:", e);
@@ -192,8 +200,8 @@ export default function Dashboard() {
       }
 
       // 3. Test Notification
-      const hasNotification = "Notification" in window;
-      if (hasNotification && (window as any).Notification.permission === "granted") {
+      const hasNotification = typeof window !== 'undefined' && "Notification" in window;
+      if (hasNotification && (window as any).Notification && (window as any).Notification.permission === "granted") {
         const title = "নোটিফিকেশন সেটআপ সফল! ✅";
         const options = {
           body: "আপনার ফোনে এখন থেকে সব কাজের নোটিফিকেশন পাওয়া যাবে।",
@@ -205,24 +213,41 @@ export default function Dashboard() {
         };
         
         try {
-          if ("serviceWorker" in navigator) {
-            const registration = await navigator.serviceWorker.ready;
-            await registration.showNotification(title, options);
+          if (typeof navigator !== 'undefined' && "serviceWorker" in navigator) {
+            // Use a timeout for service worker ready to avoid hanging
+            const registration = await Promise.race([
+              navigator.serviceWorker.ready,
+              new Promise((_, reject) => setTimeout(() => reject(new Error("SW Timeout")), 3000))
+            ]) as any;
+            
+            if (registration && registration.showNotification) {
+              await registration.showNotification(title, options);
+            } else {
+              new (window as any).Notification(title, options);
+            }
           } else {
-            new Notification(title, options);
+            new (window as any).Notification(title, options);
           }
         } catch (err) {
           // Fallback if service worker fails
-          new Notification(title, options);
+          try {
+            new (window as any).Notification(title, options);
+          } catch (e2) {}
         }
       }
       
       // Only hide if both are good
-      if (Notification.permission === "granted") {
-        setShowSetup(false);
-      }
+      try {
+        if (typeof window !== 'undefined' && (window as any).Notification && (window as any).Notification.permission === "granted") {
+          setShowSetup(false);
+        }
+      } catch (e) {}
       
-      localStorage.setItem('notificationsEnabled', 'true');
+      try {
+        if (typeof localStorage !== 'undefined') {
+          localStorage.setItem('notificationsEnabled', 'true');
+        }
+      } catch (e) {}
     } catch (e) {
       console.error("Setup error:", e);
     }
@@ -610,60 +635,75 @@ const CurrentTaskBox = ({ todayTodos, todayRoutine, theme }: { todayTodos: any[]
   // Study Routine Notification Logic
   useEffect(() => {
     const checkRoutineNotifications = async () => {
-      const nowHours = currentTime.getHours();
-      const nowMins = currentTime.getMinutes();
-      const nowTimeStr = `${nowHours.toString().padStart(2, '0')}:${nowMins.toString().padStart(2, '0')}`;
+      try {
+        const nowHours = currentTime.getHours();
+        const nowMins = currentTime.getMinutes();
+        const nowTimeStr = `${nowHours.toString().padStart(2, '0')}:${nowMins.toString().padStart(2, '0')}`;
 
-      todayRoutine.forEach(async (item) => {
-        const start = parseTime(item.startTime);
-        const end = parseTime(item.endTime);
-        if (!start || !end) return;
-        
-        if (end < start) end.setDate(end.getDate() + 1);
-        const now = currentTime.getTime();
-        const isRunning = now >= start.getTime() && now < end.getTime();
-        const isExactStart = item.startTime === nowTimeStr;
-
-        // Notify if it's the exact start time OR if it's running and we haven't notified for this session/day
-        if (isExactStart || isRunning) {
-          const dateKey = currentTime.toDateString();
-          const routineKey = `${dateKey}-${item.id || item.subject}-${item.startTime}`;
+        todayRoutine.forEach(async (item) => {
+          const start = parseTime(item.startTime);
+          const end = parseTime(item.endTime);
+          if (!start || !end) return;
           
-          if (!notifiedRoutineIds.has(routineKey)) {
-            try {
-              if ("Notification" in window && Notification.permission === "granted") {
-                const title = isExactStart ? `এখন ${item.subject} পড়ার সময়! 📚` : `পড়ার রুটিন চলছে: ${item.subject} 📚`;
-                const body = `${item.subject} পড়ার সময়! দ্রুত পড়তে বসে যাই! 🏃‍♂️💨 ---------- ${formatTime(item.startTime)} - ${formatTime(item.endTime)}`;
-                
-                const options: any = {
-                  body: body,
-                  icon: 'https://picsum.photos/seed/app/192/192',
-                  badge: 'https://picsum.photos/seed/app/192/192',
-                  tag: `routine-${routineKey}`,
-                  renotify: isExactStart,
-                  requireInteraction: true,
-                  vibrate: [200, 100, 200]
-                };
+          if (end < start) end.setDate(end.getDate() + 1);
+          const now = currentTime.getTime();
+          const isRunning = now >= start.getTime() && now < end.getTime();
+          const isExactStart = item.startTime === nowTimeStr;
 
-                try {
-                  if ("serviceWorker" in navigator) {
-                    const registration = await navigator.serviceWorker.ready;
-                    await registration.showNotification(title, options);
-                  } else {
-                    new Notification(title, options);
+          // Notify if it's the exact start time OR if it's running and we haven't notified for this session/day
+          if (isExactStart || isRunning) {
+            const dateKey = currentTime.toDateString();
+            const routineKey = `${dateKey}-${item.id || item.subject}-${item.startTime}`;
+            
+            if (!notifiedRoutineIds.has(routineKey)) {
+              try {
+                const hasNotification = typeof window !== 'undefined' && "Notification" in window;
+                if (hasNotification && (window as any).Notification && (window as any).Notification.permission === "granted") {
+                  const title = isExactStart ? `এখন ${item.subject} পড়ার সময়! 📚` : `পড়ার রুটিন চলছে: ${item.subject} 📚`;
+                  const body = `${item.subject} পড়ার সময়! দ্রুত পড়তে বসে যাই! 🏃‍♂️💨 ---------- ${formatTime(item.startTime)} - ${formatTime(item.endTime)}`;
+                  
+                  const options: any = {
+                    body: body,
+                    icon: 'https://picsum.photos/seed/app/192/192',
+                    badge: 'https://picsum.photos/seed/app/192/192',
+                    tag: `routine-${routineKey}`,
+                    renotify: isExactStart,
+                    requireInteraction: true,
+                    vibrate: [200, 100, 200]
+                  };
+
+                  try {
+                    if (typeof navigator !== 'undefined' && "serviceWorker" in navigator) {
+                      const registration = await Promise.race([
+                        navigator.serviceWorker.ready,
+                        new Promise((_, reject) => setTimeout(() => reject(new Error("SW Timeout")), 2000))
+                      ]) as any;
+                      
+                      if (registration && registration.showNotification) {
+                        await registration.showNotification(title, options);
+                      } else {
+                        new (window as any).Notification(title, options);
+                      }
+                    } else {
+                      new (window as any).Notification(title, options);
+                    }
+                  } catch (err) {
+                    try {
+                      new (window as any).Notification(title, options);
+                    } catch (e2) {}
                   }
-                } catch (err) {
-                  new Notification(title, options);
+                  
+                  setNotifiedRoutineIds(prev => new Set(prev).add(routineKey));
                 }
-                
-                setNotifiedRoutineIds(prev => new Set(prev).add(routineKey));
+              } catch (e) {
+                console.warn("Routine notification error:", e);
               }
-            } catch (e) {
-              console.warn("Routine notification error:", e);
             }
           }
-        }
-      });
+        });
+      } catch (err) {
+        console.warn("checkRoutineNotifications error:", err);
+      }
     };
 
     checkRoutineNotifications();
@@ -675,7 +715,8 @@ const CurrentTaskBox = ({ todayTodos, todayRoutine, theme }: { todayTodos: any[]
 
     const triggerNotification = async () => {
       try {
-        if ("Notification" in window && Notification.permission === "granted") {
+        const hasNotification = typeof window !== 'undefined' && "Notification" in window;
+        if (hasNotification && (window as any).Notification && (window as any).Notification.permission === "granted") {
           const title = "এই সময়ের কাজ 🕒";
           const body = `কাজ: ${currentTask.task}\n` +
                        `সময়সীমা: ${formatTime(currentTask.startTime)} - ${formatTime(currentTask.endTime)}\n` +
@@ -700,14 +741,24 @@ const CurrentTaskBox = ({ todayTodos, todayRoutine, theme }: { todayTodos: any[]
             setNotifiedTaskId(currentTask.id);
             
             try {
-              if ("serviceWorker" in navigator) {
-                const registration = await navigator.serviceWorker.ready;
-                await registration.showNotification(title, options);
+              if (typeof navigator !== 'undefined' && "serviceWorker" in navigator) {
+                const registration = await Promise.race([
+                  navigator.serviceWorker.ready,
+                  new Promise((_, reject) => setTimeout(() => reject(new Error("SW Timeout")), 2000))
+                ]) as any;
+                
+                if (registration && registration.showNotification) {
+                  await registration.showNotification(title, options);
+                } else {
+                  new (window as any).Notification(title, options);
+                }
               } else {
-                new Notification(title, options);
+                new (window as any).Notification(title, options);
               }
             } catch (err) {
-              new Notification(title, options);
+              try {
+                new (window as any).Notification(title, options);
+              } catch (e2) {}
             }
           }
         }

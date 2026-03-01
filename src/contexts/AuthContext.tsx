@@ -59,9 +59,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       }
     } catch (error) {
       console.error("CRITICAL ERROR fetching user data:", error);
-      // On timeout or error, we still want to let the user in if possible, 
-      // or at least stop the loading spinner.
       setUserData(null);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -69,13 +69,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setCurrentUser(user);
       if (user) {
-        // Add a small delay to allow DB writes to propagate if this is a fresh login/register
-        // though usually not needed, it can help in some edge cases
         await fetchUserData(user);
       } else {
         setUserData(null);
+        setLoading(false);
       }
-      setLoading(false);
     });
 
     return unsubscribe;
