@@ -217,6 +217,74 @@ const CurrentTaskBox = ({ todayTodos, todayRoutine, theme }: { todayTodos: any[]
   const [notifiedTaskId, setNotifiedTaskId] = useState<string | null>(lastNotifiedTaskId);
   const [notifiedRoutineIds, setNotifiedRoutineIds] = useState<Set<string>>(lastNotifiedRoutineIds);
 
+  // Voice Speech Logic
+  useEffect(() => {
+    if (!('speechSynthesis' in window)) return;
+
+    const checkAndSpeak = () => {
+      const now = new Date();
+      const nowHours = now.getHours();
+      const nowMins = now.getMinutes();
+      const nowSecs = now.getSeconds();
+
+      // Only trigger at the very beginning of the minute (0-2 seconds to be safe)
+      if (nowSecs > 2) return;
+
+      const nowTimeStr = `${nowHours.toString().padStart(2, '0')}:${nowMins.toString().padStart(2, '0')}`;
+      const lastSpoken = localStorage.getItem('lastSpokenMinute');
+      
+      if (lastSpoken === nowTimeStr) return;
+
+      const bnDigits = (num: number) => num.toString().replace(/\d/g, d => "০১২৩৪৫৬৭৮৯"[parseInt(d)]);
+      
+      const getBanglaTimeSpeech = (h24: number, m: number) => {
+        let h = h24 % 12;
+        if (h === 0) h = 12;
+        return `${bnDigits(h)} টা ${bnDigits(m)} মিনিট`;
+      };
+
+      const speak = (text: string) => {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = 'bn-BD';
+        
+        // Find best Bengali voice (prefer female/google)
+        const voices = window.speechSynthesis.getVoices();
+        const bnVoice = voices.find(v => v.lang.startsWith('bn') && (v.name.toLowerCase().includes('female') || v.name.toLowerCase().includes('google'))) 
+                     || voices.find(v => v.lang.startsWith('bn'))
+                     || voices.find(v => v.name.includes('Bengali'));
+        
+        if (bnVoice) utterance.voice = bnVoice;
+        
+        utterance.rate = 0.85; // Slower for peaceful feel
+        utterance.pitch = 1.1; // Slightly higher for clarity
+        window.speechSynthesis.speak(utterance);
+        localStorage.setItem('lastSpokenMinute', nowTimeStr);
+      };
+
+      // Priority 1: Todo List
+      const startingTodo = todayTodos.find(t => t.startTime === nowTimeStr);
+      if (startingTodo) {
+        const timeSpeech = getBanglaTimeSpeech(nowHours, nowMins);
+        speak(`এখন সময় ${timeSpeech}, আপনার এই সময়ের কাজ ${startingTodo.task}`);
+        return;
+      }
+
+      // Priority 2: Routine
+      const startingRoutine = todayRoutine.find(r => r.startTime === nowTimeStr);
+      if (startingRoutine) {
+        const timeSpeech = getBanglaTimeSpeech(nowHours, nowMins);
+        speak(`এখন সময় ${timeSpeech}, আপনার ${startingRoutine.subject} পড়ার সময় হয়েছে`);
+      }
+    };
+
+    // Initial load of voices
+    window.speechSynthesis.getVoices();
+    
+    const speechTimer = setInterval(checkAndSpeak, 1000);
+    return () => clearInterval(speechTimer);
+  }, [todayTodos, todayRoutine]);
+
   // Update global trackers and localStorage whenever state changes to persist across navigation and reloads
   useEffect(() => {
     lastNotifiedTaskId = notifiedTaskId;
