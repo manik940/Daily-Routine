@@ -128,6 +128,65 @@ export default function Dashboard() {
     return `${banglaDigits(day)} শে ${banglaMonths[month]}, ${banglaDays[dayOfWeek]}`;
   };
 
+  const [showSetup, setShowSetup] = useState(false);
+
+  useEffect(() => {
+    // Check if we need to show setup button (if permission not granted)
+    const checkPermission = async () => {
+      if ("Notification" in window && Notification.permission !== "granted") {
+        setShowSetup(true);
+      }
+    };
+    checkPermission();
+  }, []);
+
+  const handleSetup = async () => {
+    try {
+      // 1. Request Notification Permission
+      const win = window as any;
+      if (win.OneSignalDeferred) {
+        win.OneSignalDeferred.push(async (OneSignal: any) => {
+          await OneSignal.Notifications.requestPermission();
+        });
+      } else if ("Notification" in window) {
+        await Notification.requestPermission();
+      }
+
+      // 2. Unlock Audio/Speech (Play a tiny silent sound)
+      if (window.speechSynthesis) {
+        window.speechSynthesis.cancel();
+        // Use a space or very short text to unlock
+        const utterance = new SpeechSynthesisUtterance("সেটআপ সফল");
+        utterance.lang = 'bn-BD';
+        utterance.volume = 0; // Silent but triggers unlock
+        window.speechSynthesis.speak(utterance);
+      }
+
+      // 3. Test Notification
+      if ("Notification" in window && Notification.permission === "granted") {
+        const title = "নোটিফিকেশন সেটআপ সফল! ✅";
+        const options = {
+          body: "আপনার ফোনে এখন থেকে সব কাজের নোটিফিকেশন পাওয়া যাবে।",
+          icon: '/icon.png',
+          badge: '/icon.png',
+          tag: 'test-notification'
+        };
+        
+        if ("serviceWorker" in navigator) {
+          const registration = await navigator.serviceWorker.ready;
+          registration.showNotification(title, options);
+        } else {
+          new Notification(title, options);
+        }
+      }
+      
+      setShowSetup(false);
+      localStorage.setItem('notificationsEnabled', 'true');
+    } catch (e) {
+      console.error("Setup error:", e);
+    }
+  };
+
   const banglaDateString = getBanglaDate();
 
   return (
@@ -154,6 +213,61 @@ export default function Dashboard() {
       <div className="mb-6">
         <BannerSlider />
       </div>
+
+      {/* Setup Button for Mobile/Android */}
+      {showSetup && (
+        <motion.div 
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="bg-amber-50 border-2 border-amber-200 rounded-2xl p-5 mb-6 flex flex-col items-center text-center gap-4 shadow-md"
+        >
+          <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center text-3xl shadow-inner">🔔</div>
+          <div>
+            <h4 className="font-bold text-amber-900 text-lg">নোটিফিকেশন ও অডিও সেটআপ</h4>
+            <p className="text-sm text-amber-800 mt-1 leading-relaxed">
+              অ্যান্ড্রয়েড ফোনে সঠিক সময়ে নোটিফিকেশন ও ভয়েস এলার্ট পেতে এই সেটআপটি করা জরুরি। নিচের বাটনে ক্লিক করে পারমিশন দিন।
+            </p>
+          </div>
+          <div className="flex flex-col w-full gap-2">
+            <button 
+              onClick={handleSetup}
+              className="w-full bg-amber-500 hover:bg-amber-600 text-white px-6 py-3 rounded-xl font-bold text-base shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2"
+            >
+              <span>🔔</span> পারমিশন দিন ও অডিও চালু করুন
+            </button>
+            <div className="flex gap-2">
+              <button 
+                onClick={() => {
+                  const u = new SpeechSynthesisUtterance("আপনার অডিও এখন কাজ করছে");
+                  u.lang = 'bn-BD';
+                  window.speechSynthesis.speak(u);
+                }}
+                className="flex-1 bg-white border border-amber-200 text-amber-700 px-3 py-2 rounded-lg text-xs font-bold shadow-sm active:scale-95"
+              >
+                ভয়েস টেস্ট করুন 🔊
+              </button>
+              <button 
+                onClick={async () => {
+                  if ("Notification" in window && Notification.permission === "granted") {
+                    const options = { body: "এটি একটি টেস্ট নোটিফিকেশন", icon: '/icon.png' };
+                    if ("serviceWorker" in navigator) {
+                      const reg = await navigator.serviceWorker.ready;
+                      reg.showNotification("টেস্ট নোটিফিকেশন 🔔", options);
+                    } else {
+                      new Notification("টেস্ট নোটিফিকেশন 🔔", options);
+                    }
+                  } else {
+                    alert("আগে পারমিশন দিন");
+                  }
+                }}
+                className="flex-1 bg-white border border-amber-200 text-amber-700 px-3 py-2 rounded-lg text-xs font-bold shadow-sm active:scale-95"
+              >
+                নোটিফিকেশন টেস্ট 🔔
+              </button>
+            </div>
+          </div>
+        </motion.div>
+      )}
 
       <CurrentTaskBox todayTodos={todayTodos} todayRoutine={todayRoutine} theme={theme} />
 
