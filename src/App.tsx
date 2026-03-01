@@ -3,6 +3,7 @@ import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from 'react-hot-toast';
 import { useAuth } from './contexts/AuthContext';
 import LoadingScreen from './components/common/LoadingScreen';
+import ScrollToTop from './components/common/ScrollToTop';
 import LandingPage from './pages/auth/LandingPage';
 import EmailInputPage from './pages/auth/EmailInputPage';
 import PasswordPage from './pages/auth/PasswordPage';
@@ -43,6 +44,7 @@ function AuthRoute({ children }: { children: React.ReactNode }) {
 export default function App() {
   return (
     <Router>
+      <ScrollToTop />
       <Toaster position="top-center" toastOptions={{ duration: 3000 }} />
       <Routes>
         {/* Auth Routes */}

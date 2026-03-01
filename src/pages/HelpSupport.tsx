@@ -20,9 +20,16 @@ export default function HelpSupport() {
             </div>
           </div>
 
-          <p className="text-gray-700 leading-relaxed text-lg">
+          <p className="text-gray-700 leading-relaxed text-lg mb-6">
             যেকোনো সাহায্য বা প্রয়োজন এই ঠিকানায় মেইল পাঠান,, সাকসেসফুলভাবে ইমেইল পৌঁছালে ৭২ ঘণ্টার মধ্যে একশন নেওয়া হবে,, ধন্যবাদ!!
           </p>
+
+          <div className="p-4 bg-amber-50 border border-amber-100 rounded-xl">
+            <h3 className="text-amber-800 font-bold mb-2">সতর্কতা :</h3>
+            <p className="text-amber-900 leading-relaxed">
+              ইমেইল পাঠানোর ক্ষেত্রে,, অবশ্যই যেই ইমেইল দিয়ে একাউন্ট ক্রিয়েট করেছেন সেই মেইল থেকেই ইমেইল পাঠাতে হবে,, এক্ষেত্রে ইমেইলে অবশ্যই ইউজারের নাম, ইউনিক আইডি এবং ইমেইল উল্লেখিত রাখতে হবে,, নয়তো এটিকে Unknown ইমেইল হিসেবে গণনা করা হবে!!
+            </p>
+          </div>
         </div>
       </div>
     </DashboardLayout>
