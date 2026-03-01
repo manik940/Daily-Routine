@@ -32,18 +32,25 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
+function AuthRoute({ children }: { children: React.ReactNode }) {
+  const { currentUser, loading } = useAuth();
+  if (loading) return null; // Let the splash screen handle it
+  if (currentUser) return <Navigate to="/dashboard" />;
+  return <>{children}</>;
+}
+
 export default function App() {
   return (
     <Router>
       <Toaster position="top-center" toastOptions={{ duration: 3000 }} />
       <Routes>
         {/* Auth Routes */}
-        <Route path="/" element={<LandingPage />} />
-        <Route path="/auth/email" element={<EmailInputPage />} />
-        <Route path="/auth/password" element={<PasswordPage />} />
-        <Route path="/auth/register" element={<RegisterPage />} />
-        <Route path="/auth/forgot-password" element={<ForgotPasswordPage />} />
-        <Route path="/auth/verify" element={<VerifyEmailPage />} />
+        <Route path="/" element={<AuthRoute><LandingPage /></AuthRoute>} />
+        <Route path="/auth/email" element={<AuthRoute><EmailInputPage /></AuthRoute>} />
+        <Route path="/auth/password" element={<AuthRoute><PasswordPage /></AuthRoute>} />
+        <Route path="/auth/register" element={<AuthRoute><RegisterPage /></AuthRoute>} />
+        <Route path="/auth/forgot-password" element={<AuthRoute><ForgotPasswordPage /></AuthRoute>} />
+        <Route path="/auth/verify" element={<AuthRoute><VerifyEmailPage /></AuthRoute>} />
 
         {/* Protected Routes */}
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
