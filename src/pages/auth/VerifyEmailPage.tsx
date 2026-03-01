@@ -15,7 +15,10 @@ export default function VerifyEmailPage() {
   useEffect(() => {
     const verifyEmail = async () => {
       if (isSignInWithEmailLink(auth, window.location.href)) {
-        let email = window.localStorage.getItem('emailForSignIn');
+        let email = null;
+        try {
+          email = window.localStorage.getItem('emailForSignIn');
+        } catch (e) {}
         
         if (!email) {
           // If email is missing from local storage, ask the user for it
@@ -25,7 +28,9 @@ export default function VerifyEmailPage() {
         if (email) {
           try {
             await signInWithEmailLink(auth, email, window.location.href);
-            window.localStorage.removeItem('emailForSignIn');
+            try {
+              window.localStorage.removeItem('emailForSignIn');
+            } catch (e) {}
             setStatus('success');
           } catch (err: any) {
             console.error("Verification error:", err);

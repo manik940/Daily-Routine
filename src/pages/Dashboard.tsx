@@ -394,7 +394,11 @@ export default function Dashboard() {
 
 // Persistent notification trackers (survive navigation and page reloads)
 const getInitialTaskId = () => {
-  return localStorage.getItem('lastNotifiedTaskId');
+  try {
+    return localStorage.getItem('lastNotifiedTaskId');
+  } catch (e) {
+    return null;
+  }
 };
 
 const getInitialRoutineIds = () => {
@@ -421,10 +425,12 @@ const CurrentTaskBox = ({ todayTodos, todayRoutine, theme }: { todayTodos: any[]
 
     // Pre-load voices for Android/Mobile
     const loadVoices = () => {
-      const voices = window.speechSynthesis.getVoices();
-      if (voices.length > 0) {
-        // Voices are loaded
-      }
+      try {
+        const voices = window.speechSynthesis.getVoices();
+        if (voices.length > 0) {
+          // Voices are loaded
+        }
+      } catch (e) {}
     };
     
     window.speechSynthesis.onvoiceschanged = loadVoices;
@@ -440,7 +446,10 @@ const CurrentTaskBox = ({ todayTodos, todayRoutine, theme }: { todayTodos: any[]
       if (nowSecs > 2) return;
 
       const nowTimeStr = `${nowHours.toString().padStart(2, '0')}:${nowMins.toString().padStart(2, '0')}`;
-      const lastSpoken = localStorage.getItem('lastSpokenMinute');
+      let lastSpoken = null;
+      try {
+        lastSpoken = localStorage.getItem('lastSpokenMinute');
+      } catch (e) {}
       
       if (lastSpoken === nowTimeStr) return;
 
@@ -453,27 +462,35 @@ const CurrentTaskBox = ({ todayTodos, todayRoutine, theme }: { todayTodos: any[]
       };
 
       const speak = (text: string) => {
-        window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = 'bn-BD';
-        
-        // Find best Bengali voice (prefer female/google)
-        const voices = window.speechSynthesis.getVoices();
-        const bnVoice = voices.find(v => v.lang.startsWith('bn') && (v.name.toLowerCase().includes('female') || v.name.toLowerCase().includes('google'))) 
-                     || voices.find(v => v.lang.startsWith('bn'))
-                     || voices.find(v => v.name.includes('Bengali'));
-        
-        if (bnVoice) utterance.voice = bnVoice;
-        
-        utterance.rate = 0.85; // Slower for peaceful feel
-        utterance.pitch = 1.1; // Slightly higher for clarity
-        
-        // Android fix: some devices need a small delay or specific state
-        setTimeout(() => {
-          window.speechSynthesis.speak(utterance);
-        }, 100);
-        
-        localStorage.setItem('lastSpokenMinute', nowTimeStr);
+        try {
+          window.speechSynthesis.cancel();
+          const utterance = new SpeechSynthesisUtterance(text);
+          utterance.lang = 'bn-BD';
+          
+          // Find best Bengali voice (prefer female/google)
+          const voices = window.speechSynthesis.getVoices();
+          const bnVoice = voices.find(v => v.lang.startsWith('bn') && (v.name.toLowerCase().includes('female') || v.name.toLowerCase().includes('google'))) 
+                       || voices.find(v => v.lang.startsWith('bn'))
+                       || voices.find(v => v.name.includes('Bengali'));
+          
+          if (bnVoice) utterance.voice = bnVoice;
+          
+          utterance.rate = 0.85; // Slower for peaceful feel
+          utterance.pitch = 1.1; // Slightly higher for clarity
+          
+          // Android fix: some devices need a small delay or specific state
+          setTimeout(() => {
+            try {
+              window.speechSynthesis.speak(utterance);
+            } catch (e) {}
+          }, 100);
+          
+          try {
+            localStorage.setItem('lastSpokenMinute', nowTimeStr);
+          } catch (e) {}
+        } catch (e) {
+          console.warn("Speech synthesis error:", e);
+        }
       };
 
       // Priority 1: Todo List
@@ -504,16 +521,20 @@ const CurrentTaskBox = ({ todayTodos, todayRoutine, theme }: { todayTodos: any[]
   // Update global trackers and localStorage whenever state changes to persist across navigation and reloads
   useEffect(() => {
     lastNotifiedTaskId = notifiedTaskId;
-    if (notifiedTaskId) {
-      localStorage.setItem('lastNotifiedTaskId', notifiedTaskId);
-    } else {
-      localStorage.removeItem('lastNotifiedTaskId');
-    }
+    try {
+      if (notifiedTaskId) {
+        localStorage.setItem('lastNotifiedTaskId', notifiedTaskId);
+      } else {
+        localStorage.removeItem('lastNotifiedTaskId');
+      }
+    } catch (e) {}
   }, [notifiedTaskId]);
 
   useEffect(() => {
     lastNotifiedRoutineIds = notifiedRoutineIds;
-    localStorage.setItem('lastNotifiedRoutineIds', JSON.stringify(Array.from(notifiedRoutineIds)));
+    try {
+      localStorage.setItem('lastNotifiedRoutineIds', JSON.stringify(Array.from(notifiedRoutineIds)));
+    } catch (e) {}
     
     // Cleanup old routine IDs (older than today) to keep storage clean
     if (notifiedRoutineIds.size > 50) {
@@ -523,7 +544,9 @@ const CurrentTaskBox = ({ todayTodos, todayRoutine, theme }: { todayTodos: any[]
         const newSet = new Set<string>(filtered);
         setNotifiedRoutineIds(newSet);
         lastNotifiedRoutineIds = newSet;
-        localStorage.setItem('lastNotifiedRoutineIds', JSON.stringify(filtered));
+        try {
+          localStorage.setItem('lastNotifiedRoutineIds', JSON.stringify(filtered));
+        } catch (e) {}
       }
     }
   }, [notifiedRoutineIds]);

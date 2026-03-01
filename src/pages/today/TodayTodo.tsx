@@ -43,8 +43,12 @@ export default function TodayTodo() {
 
   useEffect(() => {
     if (currentUser && isLoaded) {
-      const storageKey = `completed_todo_${currentUser.uid}_${todayStr}`;
-      localStorage.setItem(storageKey, JSON.stringify(completedTasks));
+      try {
+        const storageKey = `completed_todo_${currentUser.uid}_${todayStr}`;
+        localStorage.setItem(storageKey, JSON.stringify(completedTasks));
+      } catch (e) {
+        console.warn("localStorage set error:", e);
+      }
     }
   }, [completedTasks, currentUser, todayStr, isLoaded]);
 

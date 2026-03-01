@@ -16,11 +16,17 @@ export const useTheme = () => useContext(ThemeContext);
 
 export const ThemeProvider = ({ children }: { children: React.ReactNode }) => {
   const [theme, setTheme] = useState<Theme>(() => {
-    return (localStorage.getItem("app_theme") as Theme) || "default";
+    try {
+      return (localStorage.getItem("app_theme") as Theme) || "default";
+    } catch (e) {
+      return "default";
+    }
   });
 
   useEffect(() => {
-    localStorage.setItem("app_theme", theme);
+    try {
+      localStorage.setItem("app_theme", theme);
+    } catch (e) {}
     document.documentElement.setAttribute("data-theme", theme);
   }, [theme]);
 
