@@ -149,101 +149,114 @@ export default function Dashboard() {
   }, []);
 
   const handleSetup = async () => {
-    try {
-      // 1. Request Notification Permission
-      const win = window as any;
-      if (win.OneSignalDeferred) {
-        win.OneSignalDeferred.push(async (OneSignal: any) => {
-          try {
-            await OneSignal.Notifications.requestPermission();
-          } catch (e) {
-            console.warn("OneSignal permission request error:", e);
-          }
-        });
-      } else if (typeof window !== 'undefined' && "Notification" in window) {
-        try {
-          const NotificationAPI = (window as any).Notification;
-          if (NotificationAPI && NotificationAPI.requestPermission) {
-            await NotificationAPI.requestPermission();
-          }
-        } catch (e) {
-          console.warn("Native notification permission request error:", e);
-        }
-      }
-
-      // 2. Unlock Audio/Speech (Play a tiny silent sound)
-      if (typeof window !== 'undefined' && window.speechSynthesis) {
-        try {
-          window.speechSynthesis.cancel();
-          // Use a space or very short text to unlock
-          const utterance = new SpeechSynthesisUtterance("সেটআপ সফল");
-          utterance.lang = 'bn-BD';
-          utterance.volume = 0.1; 
-          window.speechSynthesis.speak(utterance);
-          
-          try {
-            if (typeof sessionStorage !== 'undefined') {
-              sessionStorage.setItem('audioUnlocked', 'true');
-            }
-          } catch (e) {}
-          setAudioUnlocked(true);
-        } catch (e) {
-          console.warn("Speech unlock error:", e);
-        }
-      }
-
-      // 3. Test Notification
-      const hasNotification = typeof window !== 'undefined' && "Notification" in window;
-      if (hasNotification && (window as any).Notification && (window as any).Notification?.permission === "granted") {
-        const title = "নোটিফিকেশন সেটআপ সফল! ✅";
-        const options = {
-          body: "আপনার ফোনে এখন থেকে সব কাজের নোটিফিকেশন পাওয়া যাবে।",
-          icon: 'https://picsum.photos/seed/app/192/192',
-          badge: 'https://picsum.photos/seed/app/192/192',
-          tag: 'test-notification',
-          vibrate: [200, 100, 200],
-          requireInteraction: true
-        };
+    // 1. Unlock Audio/Speech IMMEDIATELY (Needs user gesture, cannot wait for async)
+    if (typeof window !== 'undefined' && window.speechSynthesis) {
+      try {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance("সেটআপ সম্পন্ন হচ্ছে");
+        utterance.lang = 'bn-BD';
+        utterance.volume = 1.0; // Full volume
+        utterance.rate = 1.0;
+        window.speechSynthesis.speak(utterance);
         
         try {
-          if (typeof navigator !== 'undefined' && "serviceWorker" in navigator) {
-            // Use a timeout for service worker ready to avoid hanging
-            const registration = await Promise.race([
-              navigator.serviceWorker.ready,
-              new Promise((_, reject) => setTimeout(() => reject(new Error("SW Timeout")), 3000))
-            ]) as any;
-            
-            if (registration && registration.showNotification) {
-              await registration.showNotification(title, options);
-            } else {
-              new (window as any).Notification(title, options);
-            }
-          } else {
-            new (window as any).Notification(title, options);
+          if (typeof sessionStorage !== 'undefined') {
+            sessionStorage.setItem('audioUnlocked', 'true');
           }
-        } catch (err) {
-          // Fallback if service worker fails
-          try {
-            new (window as any).Notification(title, options);
-          } catch (e2) {}
+        } catch (e) {}
+        setAudioUnlocked(true);
+        toast.success("অডিও সিস্টেম চালু হয়েছে 🔊");
+      } catch (e) {
+        console.warn("Speech unlock error:", e);
+        toast.error("অডিও চালু করা যায়নি");
+      }
+    }
+
+    // 2. Request Notification Permission (Async)
+    try {
+      const win = window as any;
+      let permissionGranted = false;
+
+      // Try OneSignal first
+      if (win.OneSignalDeferred) {
+        try {
+          await new Promise<void>((resolve) => {
+             win.OneSignalDeferred.push(async (OneSignal: any) => {
+                try {
+                  await OneSignal.Notifications.requestPermission();
+                  resolve();
+                } catch (e) {
+                  console.warn("OneSignal permission error", e);
+                  resolve();
+                }
+             });
+          });
+          permissionGranted = true;
+        } catch (e) {}
+      } 
+      
+      // Fallback to native if OneSignal didn't trigger or we want to be double sure
+      if (typeof window !== 'undefined' && "Notification" in window) {
+        const NotificationAPI = (window as any).Notification;
+        if (NotificationAPI && NotificationAPI.requestPermission) {
+           const result = await NotificationAPI.requestPermission();
+           if (result === 'granted') permissionGranted = true;
         }
       }
-      
-      // Only hide if both are good
-      try {
-        if (typeof window !== 'undefined' && (window as any).Notification && (window as any).Notification?.permission === "granted") {
-          setShowSetup(false);
-        }
-      } catch (e) {}
-      
-      try {
-        if (typeof localStorage !== 'undefined') {
-          localStorage.setItem('notificationsEnabled', 'true');
-        }
-      } catch (e) {}
+
+      if (permissionGranted) {
+         try {
+            if (typeof localStorage !== 'undefined') {
+              localStorage.setItem('notificationsEnabled', 'true');
+            }
+         } catch (e) {}
+      }
+
     } catch (e) {
-      console.error("Setup error:", e);
+      console.warn("Permission request error:", e);
+      toast.error("নোটিফিকেশন পারমিশন এরর");
     }
+
+    // 3. Test Notification (Async)
+    setTimeout(async () => {
+        try {
+            const title = "নোটিফিকেশন সেটআপ সফল! ✅";
+            const options = {
+              body: "আপনার ফোনে এখন থেকে সব কাজের নোটিফিকেশন পাওয়া যাবে।",
+              icon: 'https://picsum.photos/seed/app/192/192',
+              badge: 'https://picsum.photos/seed/app/192/192',
+              tag: 'test-notification',
+              vibrate: [200, 100, 200],
+              requireInteraction: true
+            };
+            
+            if (typeof navigator !== 'undefined' && "serviceWorker" in navigator) {
+                try {
+                    const registration = await navigator.serviceWorker.getRegistration();
+                    if (registration && registration.showNotification) {
+                        await registration.showNotification(title, options);
+                        return;
+                    }
+                } catch (swError) {
+                    console.warn("SW notification failed, trying fallback", swError);
+                }
+            }
+            
+            // Fallback
+            new (window as any).Notification(title, options);
+
+        } catch (err) {
+            console.error("Test notification failed:", err);
+            // toast.error("টেস্ট নোটিফিকেশন পাঠানো যায়নি");
+        }
+    }, 1000); // Small delay to let permission settle
+
+    // Hide setup if it looks good
+    try {
+        if (typeof window !== 'undefined' && (window as any).Notification && (window as any).Notification?.permission === "granted") {
+            setShowSetup(false);
+        }
+    } catch (e) {}
   };
 
   return (
@@ -299,12 +312,21 @@ export default function Dashboard() {
             <div className="flex gap-2">
               <button 
                 onClick={() => {
-                  if (!window.speechSynthesis) return;
-                  window.speechSynthesis.cancel();
-                  const u = new SpeechSynthesisUtterance("আপনার অডিও এখন কাজ করছে");
-                  u.lang = 'bn-BD';
-                  u.rate = 0.9;
-                  window.speechSynthesis.speak(u);
+                  try {
+                    if (!window.speechSynthesis) {
+                      toast.error("আপনার ডিভাইসে ভয়েস সাপোর্ট নেই");
+                      return;
+                    }
+                    window.speechSynthesis.cancel();
+                    const u = new SpeechSynthesisUtterance("আপনার অডিও এখন কাজ করছে");
+                    u.lang = 'bn-BD';
+                    u.rate = 0.9;
+                    window.speechSynthesis.speak(u);
+                    toast.success("টেস্ট ভয়েস পাঠানো হয়েছে 🔊");
+                  } catch (e) {
+                    console.error(e);
+                    toast.error("ভয়েস টেস্ট ব্যর্থ হয়েছে");
+                  }
                 }}
                 className="flex-1 bg-white border border-amber-200 text-amber-700 px-3 py-2 rounded-lg text-xs font-bold shadow-sm active:scale-95"
               >
@@ -314,37 +336,47 @@ export default function Dashboard() {
                 onClick={async () => {
                   try {
                     const hasNotification = typeof window !== 'undefined' && "Notification" in window;
-                    if (hasNotification && (window as any).Notification && (window as any).Notification?.permission === "granted") {
-                      const options = { 
-                        body: "এটি একটি টেস্ট নোটিফিকেশন", 
-                        icon: 'https://picsum.photos/seed/app/192/192',
-                        vibrate: [100, 50, 100]
-                      };
-                      try {
-                        if (typeof navigator !== 'undefined' && "serviceWorker" in navigator) {
-                          const reg = await Promise.race([
-                            navigator.serviceWorker.ready,
-                            new Promise((_, reject) => setTimeout(() => reject(new Error("SW Timeout")), 2000))
-                          ]) as any;
-                          
-                          if (reg && reg.showNotification) {
-                            await reg.showNotification("টেস্ট নোটিফিকেশন 🔔", options);
-                          } else {
-                            new (window as any).Notification("টেস্ট নোটিফিকেশন 🔔", options);
-                          }
-                        } else {
-                          new (window as any).Notification("টেস্ট নোটিফিকেশন 🔔", options);
-                        }
-                      } catch (e) {
-                        try {
-                          new (window as any).Notification("টেস্ট নোটিফিকেশন 🔔", options);
-                        } catch (e2) {}
-                      }
-                    } else {
-                      toast.error("আগে পারমিশন দিন");
+                    if (!hasNotification) {
+                       toast.error("নোটিফিকেশন সাপোর্ট নেই");
+                       return;
                     }
-                  } catch (err) {
-                    console.warn("Notification test error:", err);
+                    
+                    if ((window as any).Notification?.permission !== "granted") {
+                       toast.error("আগে পারমিশন দিন");
+                       return;
+                    }
+
+                    const options = { 
+                      body: "এটি একটি টেস্ট নোটিফিকেশন", 
+                      icon: 'https://picsum.photos/seed/app/192/192',
+                      vibrate: [100, 50, 100]
+                    };
+                    
+                    try {
+                      if (typeof navigator !== 'undefined' && "serviceWorker" in navigator) {
+                        const reg = await navigator.serviceWorker.getRegistration();
+                        if (reg && reg.showNotification) {
+                          await reg.showNotification("টেস্ট নোটিফিকেশন 🔔", options);
+                          toast.success("নোটিফিকেশন পাঠানো হয়েছে ✅");
+                          return;
+                        }
+                      }
+                      
+                      // Fallback
+                      new (window as any).Notification("টেস্ট নোটিফিকেশন 🔔", options);
+                      toast.success("নোটিফিকেশন পাঠানো হয়েছে (নেটিভ) ✅");
+                    } catch (err) {
+                      console.warn("Notification test error:", err);
+                      // Last resort try
+                      try {
+                         new (window as any).Notification("টেস্ট নোটিফিকেশন 🔔", options);
+                      } catch (e) {
+                         toast.error("নোটিফিকেশন পাঠানো যায়নি ❌");
+                      }
+                    }
+                  } catch (e) {
+                    console.error(e);
+                    toast.error("এরর হয়েছে");
                   }
                 }}
                 className="flex-1 bg-white border border-amber-200 text-amber-700 px-3 py-2 rounded-lg text-xs font-bold shadow-sm active:scale-95"
@@ -685,10 +717,7 @@ const CurrentTaskBox = ({ todayTodos, todayRoutine, theme, currentTime }: { toda
 
                   try {
                     if (typeof navigator !== 'undefined' && "serviceWorker" in navigator) {
-                      const registration = await Promise.race([
-                        navigator.serviceWorker.ready,
-                        new Promise((_, reject) => setTimeout(() => reject(new Error("SW Timeout")), 2000))
-                      ]) as any;
+                      const registration = await navigator.serviceWorker.getRegistration();
                       
                       if (registration && registration.showNotification) {
                         await registration.showNotification(title, options);
@@ -753,10 +782,7 @@ const CurrentTaskBox = ({ todayTodos, todayRoutine, theme, currentTime }: { toda
             
             try {
               if (typeof navigator !== 'undefined' && "serviceWorker" in navigator) {
-                const registration = await Promise.race([
-                  navigator.serviceWorker.ready,
-                  new Promise((_, reject) => setTimeout(() => reject(new Error("SW Timeout")), 2000))
-                ]) as any;
+                const registration = await navigator.serviceWorker.getRegistration();
                 
                 if (registration && registration.showNotification) {
                   await registration.showNotification(title, options);
