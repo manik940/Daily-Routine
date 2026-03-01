@@ -147,7 +147,7 @@ export default function Dashboard() {
         <BannerSlider />
       </div>
 
-      <CurrentTaskBox todayTodos={todayTodos} theme={theme} />
+      <CurrentTaskBox todayTodos={todayTodos} todayRoutine={todayRoutine} theme={theme} />
 
       {/* Quick Access Grid - Square, White, Emoji */}
       <h3 className="font-bold text-gray-800 mb-3 flex items-center gap-2 text-sm uppercase tracking-wider opacity-70">
@@ -187,9 +187,10 @@ export default function Dashboard() {
 }
 
 // Current Task Box Component
-const CurrentTaskBox = ({ todayTodos, theme }: { todayTodos: any[], theme: string }) => {
+const CurrentTaskBox = ({ todayTodos, todayRoutine, theme }: { todayTodos: any[], todayRoutine: any[], theme: string }) => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [notifiedTaskId, setNotifiedTaskId] = useState<string | null>(null);
+  const [notifiedRoutineIds, setNotifiedRoutineIds] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     // Request notification permission using OneSignal if available, otherwise native
@@ -291,7 +292,53 @@ const CurrentTaskBox = ({ todayTodos, theme }: { todayTodos: any[], theme: strin
     }
   }
 
-  // Notification Logic
+  // Study Routine Notification Logic
+  useEffect(() => {
+    const checkRoutineNotifications = async () => {
+      const nowHours = currentTime.getHours();
+      const nowMins = currentTime.getMinutes();
+      const nowTimeStr = `${nowHours.toString().padStart(2, '0')}:${nowMins.toString().padStart(2, '0')}`;
+
+      todayRoutine.forEach(async (item) => {
+        if (item.startTime === nowTimeStr) {
+          const dateKey = currentTime.toDateString();
+          const routineKey = `${dateKey}-${item.id || item.subject}-${nowTimeStr}`;
+          if (!notifiedRoutineIds.has(routineKey)) {
+            try {
+              if ("Notification" in window && Notification.permission === "granted") {
+                const title = `এখন ${item.subject} পড়ার সময়! 📚`;
+                const body = `${item.subject} পড়ার সময় হয়ে গেছে! দ্রুত পড়তে বসে যাই! 🏃‍♂️💨 ---------- ${formatTime(item.startTime)} - ${formatTime(item.endTime)}`;
+                
+                const options: any = {
+                  body: body,
+                  icon: '/icon.png',
+                  badge: '/icon.png',
+                  tag: `routine-${routineKey}`,
+                  renotify: true,
+                  requireInteraction: true
+                };
+
+                if ("serviceWorker" in navigator) {
+                  const registration = await navigator.serviceWorker.ready;
+                  registration.showNotification(title, options);
+                } else {
+                  new Notification(title, options);
+                }
+                
+                setNotifiedRoutineIds(prev => new Set(prev).add(routineKey));
+              }
+            } catch (e) {
+              console.warn("Routine notification error:", e);
+            }
+          }
+        }
+      });
+    };
+
+    checkRoutineNotifications();
+  }, [currentTime.getMinutes(), todayRoutine, notifiedRoutineIds]);
+
+  // Notification Logic for Current Task
   useEffect(() => {
     const closeNotification = async () => {
       if ("serviceWorker" in navigator) {
