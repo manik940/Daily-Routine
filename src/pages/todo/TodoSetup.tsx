@@ -8,7 +8,7 @@ import DashboardLayout from "../../components/DashboardLayout";
 import TapAndHoldButton from "../../components/TapAndHoldButton";
 import { Plus, Trash2, Edit2, ChevronRight, ArrowLeft, Clock, AlertCircle, CheckSquare, Calendar } from "lucide-react";
 import { format, nextDay } from "date-fns";
-import { scheduleNotification } from "../../lib/onesignal";
+
 import toast from "react-hot-toast";
 
 const DAYS = ["saturday", "sunday", "monday", "tuesday", "wednesday", "thursday", "friday"];
@@ -187,28 +187,7 @@ export default function TodoSetup() {
         toast.success(language === 'bn' ? "টুডু লিস্ট তৈরি সফল হয়েছে!" : "Todo list created successfully!");
     }
 
-    // Schedule Notifications
-    try {
-        const now = new Date();
-        Object.keys(todoData).forEach(dayName => {
-            const tasks = todoData[dayName];
-            const dayIndex = DAY_INDICES[dayName.toLowerCase()];
-            
-            // Calculate next date for this day
-            let nextDate = nextDay(now, dayIndex as any);
-            
-            tasks.forEach((task: any) => {
-                if (task.startTime) {
-                    // Combine date and time
-                    const dateTimeStr = `${format(nextDate, "yyyy-MM-dd")} ${task.startTime}:00 GMT+0600`; // Assuming Bangladesh Time
-                    console.log(`Scheduling for ${currentUser.uid}: ${task.task} at ${dateTimeStr}`);
-                    scheduleNotification(currentUser.uid, task.task, dateTimeStr);
-                }
-            });
-        });
-    } catch (e) {
-        console.error("Notification scheduling error", e);
-    }
+
 
     setView("list");
   };
