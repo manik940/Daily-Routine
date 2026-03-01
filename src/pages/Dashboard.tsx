@@ -350,6 +350,9 @@ const CurrentTaskBox = ({ todayTodos, todayRoutine, theme }: { todayTodos: any[]
 
     if (!currentTask || todayTodos.length === 0) {
       closeNotification();
+      if (notifiedTaskId !== null) {
+        setNotifiedTaskId(null);
+      }
       return;
     }
 
