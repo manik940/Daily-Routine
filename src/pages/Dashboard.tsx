@@ -221,6 +221,17 @@ const CurrentTaskBox = ({ todayTodos, todayRoutine, theme }: { todayTodos: any[]
   useEffect(() => {
     if (!('speechSynthesis' in window)) return;
 
+    // Pre-load voices for Android/Mobile
+    const loadVoices = () => {
+      const voices = window.speechSynthesis.getVoices();
+      if (voices.length > 0) {
+        // Voices are loaded
+      }
+    };
+    
+    window.speechSynthesis.onvoiceschanged = loadVoices;
+    loadVoices();
+
     const checkAndSpeak = () => {
       const now = new Date();
       const nowHours = now.getHours();
@@ -258,7 +269,12 @@ const CurrentTaskBox = ({ todayTodos, todayRoutine, theme }: { todayTodos: any[]
         
         utterance.rate = 0.85; // Slower for peaceful feel
         utterance.pitch = 1.1; // Slightly higher for clarity
-        window.speechSynthesis.speak(utterance);
+        
+        // Android fix: some devices need a small delay or specific state
+        setTimeout(() => {
+          window.speechSynthesis.speak(utterance);
+        }, 100);
+        
         localStorage.setItem('lastSpokenMinute', nowTimeStr);
       };
 
@@ -278,11 +294,13 @@ const CurrentTaskBox = ({ todayTodos, todayRoutine, theme }: { todayTodos: any[]
       }
     };
 
-    // Initial load of voices
-    window.speechSynthesis.getVoices();
-    
     const speechTimer = setInterval(checkAndSpeak, 1000);
-    return () => clearInterval(speechTimer);
+    return () => {
+      clearInterval(speechTimer);
+      if (window.speechSynthesis) {
+        window.speechSynthesis.onvoiceschanged = null;
+      }
+    };
   }, [todayTodos, todayRoutine]);
 
   // Update global trackers and localStorage whenever state changes to persist across navigation and reloads
@@ -420,21 +438,32 @@ const CurrentTaskBox = ({ todayTodos, todayRoutine, theme }: { todayTodos: any[]
       const nowTimeStr = `${nowHours.toString().padStart(2, '0')}:${nowMins.toString().padStart(2, '0')}`;
 
       todayRoutine.forEach(async (item) => {
-        if (item.startTime === nowTimeStr) {
+        const start = parseTime(item.startTime);
+        const end = parseTime(item.endTime);
+        if (!start || !end) return;
+        
+        if (end < start) end.setDate(end.getDate() + 1);
+        const now = currentTime.getTime();
+        const isRunning = now >= start.getTime() && now < end.getTime();
+        const isExactStart = item.startTime === nowTimeStr;
+
+        // Notify if it's the exact start time OR if it's running and we haven't notified for this session/day
+        if (isExactStart || isRunning) {
           const dateKey = currentTime.toDateString();
-          const routineKey = `${dateKey}-${item.id || item.subject}-${nowTimeStr}`;
+          const routineKey = `${dateKey}-${item.id || item.subject}-${item.startTime}`;
+          
           if (!notifiedRoutineIds.has(routineKey)) {
             try {
               if ("Notification" in window && Notification.permission === "granted") {
-                const title = `এখন ${item.subject} পড়ার সময়! 📚`;
-                const body = `${item.subject} পড়ার সময় হয়ে গেছে! দ্রুত পড়তে বসে যাই! 🏃‍♂️💨 ---------- ${formatTime(item.startTime)} - ${formatTime(item.endTime)}`;
+                const title = isExactStart ? `এখন ${item.subject} পড়ার সময়! 📚` : `পড়ার রুটিন চলছে: ${item.subject} 📚`;
+                const body = `${item.subject} পড়ার সময়! দ্রুত পড়তে বসে যাই! 🏃‍♂️💨 ---------- ${formatTime(item.startTime)} - ${formatTime(item.endTime)}`;
                 
                 const options: any = {
                   body: body,
                   icon: '/icon.png',
                   badge: '/icon.png',
                   tag: `routine-${routineKey}`,
-                  renotify: true,
+                  renotify: isExactStart,
                   requireInteraction: true
                 };
 
