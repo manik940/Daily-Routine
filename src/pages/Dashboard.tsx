@@ -26,7 +26,7 @@ export default function Dashboard() {
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentTime(new Date());
-    }, 60000);
+    }, 1000);
     return () => clearInterval(timer);
   }, []);
 
@@ -160,9 +160,12 @@ export default function Dashboard() {
             console.warn("OneSignal permission request error:", e);
           }
         });
-      } else if ("Notification" in window) {
+      } else if (typeof window !== 'undefined' && "Notification" in window) {
         try {
-          await (window as any).Notification.requestPermission();
+          const NotificationAPI = (window as any).Notification;
+          if (NotificationAPI && NotificationAPI.requestPermission) {
+            await NotificationAPI.requestPermission();
+          }
         } catch (e) {
           console.warn("Native notification permission request error:", e);
         }
@@ -278,10 +281,10 @@ export default function Dashboard() {
           <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center text-3xl shadow-inner">🔔</div>
           <div>
             <h4 className="font-bold text-amber-900 text-lg">
-              {Notification.permission !== "granted" ? "নোটিফিকেশন ও অডিও সেটআপ" : "ভয়েস এলার্ট চালু করুন"}
+              {typeof window !== 'undefined' && "Notification" in window && (window as any).Notification?.permission !== "granted" ? "নোটিফিকেশন ও অডিও সেটআপ" : "ভয়েস এলার্ট চালু করুন"}
             </h4>
             <p className="text-sm text-amber-800 mt-1 leading-relaxed">
-              {Notification.permission !== "granted" 
+              {typeof window !== 'undefined' && "Notification" in window && (window as any).Notification?.permission !== "granted" 
                 ? "অ্যান্ড্রয়েড ফোনে সঠিক সময়ে নোটিফিকেশন ও ভয়েস এলার্ট পেতে এই সেটআপটি করা জরুরি।" 
                 : "আপনার ফোনে ভয়েস এলার্ট কাজ করার জন্য নিচের বাটনে একবার ক্লিক করুন।"}
             </p>
@@ -291,7 +294,7 @@ export default function Dashboard() {
               onClick={handleSetup}
               className="w-full bg-amber-500 hover:bg-amber-600 text-white px-6 py-3 rounded-xl font-bold text-base shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2"
             >
-              <span>🔔</span> {Notification.permission !== "granted" ? "পারমিশন দিন ও অডিও চালু করুন" : "ভয়েস এলার্ট সক্রিয় করুন"}
+              <span>🔔</span> {typeof window !== 'undefined' && "Notification" in window && (window as any).Notification?.permission !== "granted" ? "পারমিশন দিন ও অডিও চালু করুন" : "ভয়েস এলার্ট সক্রিয় করুন"}
             </button>
             <div className="flex gap-2">
               <button 
@@ -353,7 +356,7 @@ export default function Dashboard() {
         </motion.div>
       )}
 
-      <CurrentTaskBox todayTodos={todayTodos} todayRoutine={todayRoutine} theme={theme} />
+      <CurrentTaskBox todayTodos={todayTodos} todayRoutine={todayRoutine} theme={theme} currentTime={currentTime} />
 
       {/* Quick Access Grid - Square, White, Emoji */}
       <h3 className="font-bold text-gray-800 mb-3 flex items-center gap-2 text-sm uppercase tracking-wider opacity-70">
@@ -414,8 +417,7 @@ let lastNotifiedTaskId: string | null = getInitialTaskId();
 let lastNotifiedRoutineIds: Set<string> = getInitialRoutineIds();
 
 // Current Task Box Component
-const CurrentTaskBox = ({ todayTodos, todayRoutine, theme }: { todayTodos: any[], todayRoutine: any[], theme: string }) => {
-  const [currentTime, setCurrentTime] = useState(new Date());
+const CurrentTaskBox = ({ todayTodos, todayRoutine, theme, currentTime }: { todayTodos: any[], todayRoutine: any[], theme: string, currentTime: Date }) => {
   const [notifiedTaskId, setNotifiedTaskId] = useState<string | null>(lastNotifiedTaskId);
   const [notifiedRoutineIds, setNotifiedRoutineIds] = useState<Set<string>>(lastNotifiedRoutineIds);
 
@@ -562,11 +564,13 @@ const CurrentTaskBox = ({ todayTodos, todayRoutine, theme }: { todayTodos: any[]
               await OneSignal.Notifications.requestPermission();
             } catch (e) {}
           });
-        } else if ("Notification" in window) {
-          const Notification = (window as any).Notification;
-          if (Notification && Notification.permission !== "granted" && Notification.permission !== "denied") {
+        } else if (typeof window !== 'undefined' && "Notification" in window) {
+          const NotificationAPI = (window as any).Notification;
+          if (NotificationAPI && NotificationAPI.permission !== "granted" && NotificationAPI.permission !== "denied") {
             try {
-              await Notification.requestPermission();
+              if (NotificationAPI.requestPermission) {
+                await NotificationAPI.requestPermission();
+              }
             } catch (e) {}
           }
         }
@@ -665,7 +669,7 @@ const CurrentTaskBox = ({ todayTodos, todayRoutine, theme }: { todayTodos: any[]
             if (!notifiedRoutineIds.has(routineKey)) {
               try {
                 const hasNotification = typeof window !== 'undefined' && "Notification" in window;
-                if (hasNotification && (window as any).Notification && (window as any).Notification.permission === "granted") {
+                if (hasNotification && (window as any).Notification && (window as any).Notification?.permission === "granted") {
                   const title = isExactStart ? `এখন ${item.subject} পড়ার সময়! 📚` : `পড়ার রুটিন চলছে: ${item.subject} 📚`;
                   const body = `${item.subject} পড়ার সময়! দ্রুত পড়তে বসে যাই! 🏃‍♂️💨 ---------- ${formatTime(item.startTime)} - ${formatTime(item.endTime)}`;
                   
@@ -723,7 +727,7 @@ const CurrentTaskBox = ({ todayTodos, todayRoutine, theme }: { todayTodos: any[]
     const triggerNotification = async () => {
       try {
         const hasNotification = typeof window !== 'undefined' && "Notification" in window;
-        if (hasNotification && (window as any).Notification && (window as any).Notification.permission === "granted") {
+        if (hasNotification && (window as any).Notification && (window as any).Notification?.permission === "granted") {
           const title = "এই সময়ের কাজ 🕒";
           const body = `কাজ: ${currentTask.task}\n` +
                        `সময়সীমা: ${formatTime(currentTask.startTime)} - ${formatTime(currentTask.endTime)}\n` +
