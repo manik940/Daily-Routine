@@ -134,16 +134,21 @@ export default function Dashboard() {
   useEffect(() => {
     // Check if we need to show setup button
     const checkStatus = async () => {
-      const permission = "Notification" in window ? Notification.permission : "denied";
-      const sessionUnlocked = sessionStorage.getItem('audioUnlocked') === 'true';
-      
-      // Show setup if permission not granted OR if audio not unlocked in this session
-      if (permission !== "granted" || !sessionUnlocked) {
-        setShowSetup(true);
-      }
-      
-      if (sessionUnlocked) {
-        setAudioUnlocked(true);
+      try {
+        const hasNotification = "Notification" in window;
+        const permission = hasNotification ? (window as any).Notification.permission : "denied";
+        const sessionUnlocked = sessionStorage.getItem('audioUnlocked') === 'true';
+        
+        // Show setup if permission not granted OR if audio not unlocked in this session
+        if (permission !== "granted" || !sessionUnlocked) {
+          setShowSetup(true);
+        }
+        
+        if (sessionUnlocked) {
+          setAudioUnlocked(true);
+        }
+      } catch (e) {
+        console.warn("Status check error:", e);
       }
     };
     checkStatus();
@@ -155,27 +160,40 @@ export default function Dashboard() {
       const win = window as any;
       if (win.OneSignalDeferred) {
         win.OneSignalDeferred.push(async (OneSignal: any) => {
-          await OneSignal.Notifications.requestPermission();
+          try {
+            await OneSignal.Notifications.requestPermission();
+          } catch (e) {
+            console.warn("OneSignal permission request error:", e);
+          }
         });
       } else if ("Notification" in window) {
-        await Notification.requestPermission();
+        try {
+          await (window as any).Notification.requestPermission();
+        } catch (e) {
+          console.warn("Native notification permission request error:", e);
+        }
       }
 
       // 2. Unlock Audio/Speech (Play a tiny silent sound)
       if (window.speechSynthesis) {
-        window.speechSynthesis.cancel();
-        // Use a space or very short text to unlock
-        const utterance = new SpeechSynthesisUtterance("সেটআপ সফল");
-        utterance.lang = 'bn-BD';
-        utterance.volume = 0.1; // Low volume but audible enough to trigger unlock
-        window.speechSynthesis.speak(utterance);
-        
-        sessionStorage.setItem('audioUnlocked', 'true');
-        setAudioUnlocked(true);
+        try {
+          window.speechSynthesis.cancel();
+          // Use a space or very short text to unlock
+          const utterance = new SpeechSynthesisUtterance("সেটআপ সফল");
+          utterance.lang = 'bn-BD';
+          utterance.volume = 0.1; 
+          window.speechSynthesis.speak(utterance);
+          
+          sessionStorage.setItem('audioUnlocked', 'true');
+          setAudioUnlocked(true);
+        } catch (e) {
+          console.warn("Speech unlock error:", e);
+        }
       }
 
       // 3. Test Notification
-      if ("Notification" in window && Notification.permission === "granted") {
+      const hasNotification = "Notification" in window;
+      if (hasNotification && (window as any).Notification.permission === "granted") {
         const title = "নোটিফিকেশন সেটআপ সফল! ✅";
         const options = {
           body: "আপনার ফোনে এখন থেকে সব কাজের নোটিফিকেশন পাওয়া যাবে।",
@@ -489,10 +507,17 @@ const CurrentTaskBox = ({ todayTodos, todayRoutine, theme }: { todayTodos: any[]
         const win = window as any;
         if (win.OneSignalDeferred) {
           win.OneSignalDeferred.push(async (OneSignal: any) => {
-            await OneSignal.Notifications.requestPermission();
+            try {
+              await OneSignal.Notifications.requestPermission();
+            } catch (e) {}
           });
-        } else if ("Notification" in window && Notification.permission !== "granted" && Notification.permission !== "denied") {
-          await Notification.requestPermission();
+        } else if ("Notification" in window) {
+          const Notification = (window as any).Notification;
+          if (Notification.permission !== "granted" && Notification.permission !== "denied") {
+            try {
+              await Notification.requestPermission();
+            } catch (e) {}
+          }
         }
       } catch (e) {
         console.warn("Notification permission error:", e);

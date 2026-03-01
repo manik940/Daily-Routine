@@ -1,9 +1,9 @@
 {
   "name": "My AI Studio App",
   "short_name": "AI App",
-  "start_url": "/",
+  "start_url": "/#/",
   "display": "standalone",
-  "background_color": "#ffffff",
+  "background_color": "#f9fafb",
   "theme_color": "#10b981",
   "icons": [
     {

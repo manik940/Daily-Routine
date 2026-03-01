@@ -41,20 +41,27 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const fetchUserData = async (user: User) => {
     try {
       const userRef = ref(db, `users/${user.uid}`);
-      const snapshot = await get(userRef);
+      
+      // Add a timeout for the database fetch on mobile/PWA
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error("Database timeout")), 8000)
+      );
+      
+      const snapshot = await Promise.race([get(userRef), timeoutPromise]) as any;
+      
       if (snapshot.exists()) {
         const data = snapshot.val();
         setUserData(data);
         console.log("User Data Fetched Successfully:", data); 
       } else {
         console.warn("No user data found in DB for uid:", user.uid);
-        // Don't set null immediately if we want to keep old data or show loading? 
-        // No, if DB is empty, we should reflect that.
         setUserData(null);
       }
     } catch (error) {
       console.error("CRITICAL ERROR fetching user data:", error);
-      // Could set an error state here to show in UI
+      // On timeout or error, we still want to let the user in if possible, 
+      // or at least stop the loading spinner.
+      setUserData(null);
     }
   };
 
