@@ -129,15 +129,24 @@ export default function Dashboard() {
   };
 
   const [showSetup, setShowSetup] = useState(false);
+  const [audioUnlocked, setAudioUnlocked] = useState(false);
 
   useEffect(() => {
-    // Check if we need to show setup button (if permission not granted)
-    const checkPermission = async () => {
-      if ("Notification" in window && Notification.permission !== "granted") {
+    // Check if we need to show setup button
+    const checkStatus = async () => {
+      const permission = "Notification" in window ? Notification.permission : "denied";
+      const sessionUnlocked = sessionStorage.getItem('audioUnlocked') === 'true';
+      
+      // Show setup if permission not granted OR if audio not unlocked in this session
+      if (permission !== "granted" || !sessionUnlocked) {
         setShowSetup(true);
       }
+      
+      if (sessionUnlocked) {
+        setAudioUnlocked(true);
+      }
     };
-    checkPermission();
+    checkStatus();
   }, []);
 
   const handleSetup = async () => {
@@ -158,8 +167,11 @@ export default function Dashboard() {
         // Use a space or very short text to unlock
         const utterance = new SpeechSynthesisUtterance("সেটআপ সফল");
         utterance.lang = 'bn-BD';
-        utterance.volume = 0; // Silent but triggers unlock
+        utterance.volume = 0.1; // Low volume but audible enough to trigger unlock
         window.speechSynthesis.speak(utterance);
+        
+        sessionStorage.setItem('audioUnlocked', 'true');
+        setAudioUnlocked(true);
       }
 
       // 3. Test Notification
@@ -167,20 +179,31 @@ export default function Dashboard() {
         const title = "নোটিফিকেশন সেটআপ সফল! ✅";
         const options = {
           body: "আপনার ফোনে এখন থেকে সব কাজের নোটিফিকেশন পাওয়া যাবে।",
-          icon: '/icon.png',
-          badge: '/icon.png',
-          tag: 'test-notification'
+          icon: 'https://picsum.photos/seed/app/192/192',
+          badge: 'https://picsum.photos/seed/app/192/192',
+          tag: 'test-notification',
+          vibrate: [200, 100, 200],
+          requireInteraction: true
         };
         
-        if ("serviceWorker" in navigator) {
-          const registration = await navigator.serviceWorker.ready;
-          registration.showNotification(title, options);
-        } else {
+        try {
+          if ("serviceWorker" in navigator) {
+            const registration = await navigator.serviceWorker.ready;
+            await registration.showNotification(title, options);
+          } else {
+            new Notification(title, options);
+          }
+        } catch (err) {
+          // Fallback if service worker fails
           new Notification(title, options);
         }
       }
       
-      setShowSetup(false);
+      // Only hide if both are good
+      if (Notification.permission === "granted") {
+        setShowSetup(false);
+      }
+      
       localStorage.setItem('notificationsEnabled', 'true');
     } catch (e) {
       console.error("Setup error:", e);
@@ -223,9 +246,13 @@ export default function Dashboard() {
         >
           <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center text-3xl shadow-inner">🔔</div>
           <div>
-            <h4 className="font-bold text-amber-900 text-lg">নোটিফিকেশন ও অডিও সেটআপ</h4>
+            <h4 className="font-bold text-amber-900 text-lg">
+              {Notification.permission !== "granted" ? "নোটিফিকেশন ও অডিও সেটআপ" : "ভয়েস এলার্ট চালু করুন"}
+            </h4>
             <p className="text-sm text-amber-800 mt-1 leading-relaxed">
-              অ্যান্ড্রয়েড ফোনে সঠিক সময়ে নোটিফিকেশন ও ভয়েস এলার্ট পেতে এই সেটআপটি করা জরুরি। নিচের বাটনে ক্লিক করে পারমিশন দিন।
+              {Notification.permission !== "granted" 
+                ? "অ্যান্ড্রয়েড ফোনে সঠিক সময়ে নোটিফিকেশন ও ভয়েস এলার্ট পেতে এই সেটআপটি করা জরুরি।" 
+                : "আপনার ফোনে ভয়েস এলার্ট কাজ করার জন্য নিচের বাটনে একবার ক্লিক করুন।"}
             </p>
           </div>
           <div className="flex flex-col w-full gap-2">
@@ -233,13 +260,16 @@ export default function Dashboard() {
               onClick={handleSetup}
               className="w-full bg-amber-500 hover:bg-amber-600 text-white px-6 py-3 rounded-xl font-bold text-base shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2"
             >
-              <span>🔔</span> পারমিশন দিন ও অডিও চালু করুন
+              <span>🔔</span> {Notification.permission !== "granted" ? "পারমিশন দিন ও অডিও চালু করুন" : "ভয়েস এলার্ট সক্রিয় করুন"}
             </button>
             <div className="flex gap-2">
               <button 
                 onClick={() => {
+                  if (!window.speechSynthesis) return;
+                  window.speechSynthesis.cancel();
                   const u = new SpeechSynthesisUtterance("আপনার অডিও এখন কাজ করছে");
                   u.lang = 'bn-BD';
+                  u.rate = 0.9;
                   window.speechSynthesis.speak(u);
                 }}
                 className="flex-1 bg-white border border-amber-200 text-amber-700 px-3 py-2 rounded-lg text-xs font-bold shadow-sm active:scale-95"
@@ -249,11 +279,19 @@ export default function Dashboard() {
               <button 
                 onClick={async () => {
                   if ("Notification" in window && Notification.permission === "granted") {
-                    const options = { body: "এটি একটি টেস্ট নোটিফিকেশন", icon: '/icon.png' };
-                    if ("serviceWorker" in navigator) {
-                      const reg = await navigator.serviceWorker.ready;
-                      reg.showNotification("টেস্ট নোটিফিকেশন 🔔", options);
-                    } else {
+                    const options = { 
+                      body: "এটি একটি টেস্ট নোটিফিকেশন", 
+                      icon: 'https://picsum.photos/seed/app/192/192',
+                      vibrate: [100, 50, 100]
+                    };
+                    try {
+                      if ("serviceWorker" in navigator) {
+                        const reg = await navigator.serviceWorker.ready;
+                        await reg.showNotification("টেস্ট নোটিফিকেশন 🔔", options);
+                      } else {
+                        new Notification("টেস্ট নোটিফিকেশন 🔔", options);
+                      }
+                    } catch (e) {
                       new Notification("টেস্ট নোটিফিকেশন 🔔", options);
                     }
                   } else {
@@ -574,17 +612,22 @@ const CurrentTaskBox = ({ todayTodos, todayRoutine, theme }: { todayTodos: any[]
                 
                 const options: any = {
                   body: body,
-                  icon: '/icon.png',
-                  badge: '/icon.png',
+                  icon: 'https://picsum.photos/seed/app/192/192',
+                  badge: 'https://picsum.photos/seed/app/192/192',
                   tag: `routine-${routineKey}`,
                   renotify: isExactStart,
-                  requireInteraction: true
+                  requireInteraction: true,
+                  vibrate: [200, 100, 200]
                 };
 
-                if ("serviceWorker" in navigator) {
-                  const registration = await navigator.serviceWorker.ready;
-                  registration.showNotification(title, options);
-                } else {
+                try {
+                  if ("serviceWorker" in navigator) {
+                    const registration = await navigator.serviceWorker.ready;
+                    await registration.showNotification(title, options);
+                  } else {
+                    new Notification(title, options);
+                  }
+                } catch (err) {
                   new Notification(title, options);
                 }
                 
@@ -603,9 +646,7 @@ const CurrentTaskBox = ({ todayTodos, todayRoutine, theme }: { todayTodos: any[]
 
   // Notification Logic for Current Task
   useEffect(() => {
-    if (!currentTask) {
-      return;
-    }
+    if (!currentTask) return;
 
     const triggerNotification = async () => {
       try {
@@ -619,11 +660,12 @@ const CurrentTaskBox = ({ todayTodos, todayRoutine, theme }: { todayTodos: any[]
             body: body,
             tag: 'current-task-notification',
             renotify: false,
-            icon: '/icon.png',
-            badge: '/icon.png',
+            icon: 'https://picsum.photos/seed/app/192/192',
+            badge: 'https://picsum.photos/seed/app/192/192',
             silent: true,
             dir: 'auto',
-            requireInteraction: true
+            requireInteraction: true,
+            vibrate: [200, 100, 200]
           };
 
           // If it's a new task, make it loud and renotify
@@ -632,11 +674,14 @@ const CurrentTaskBox = ({ todayTodos, todayRoutine, theme }: { todayTodos: any[]
             options.renotify = true;
             setNotifiedTaskId(currentTask.id);
             
-            // Use service worker to show notification
-            if ("serviceWorker" in navigator) {
-              const registration = await navigator.serviceWorker.ready;
-              registration.showNotification(title, options);
-            } else {
+            try {
+              if ("serviceWorker" in navigator) {
+                const registration = await navigator.serviceWorker.ready;
+                await registration.showNotification(title, options);
+              } else {
+                new Notification(title, options);
+              }
+            } catch (err) {
               new Notification(title, options);
             }
           }
