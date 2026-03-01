@@ -2,6 +2,7 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import { useAuth } from './contexts/AuthContext';
+import LoadingScreen from './components/common/LoadingScreen';
 import LandingPage from './pages/auth/LandingPage';
 import EmailInputPage from './pages/auth/EmailInputPage';
 import PasswordPage from './pages/auth/PasswordPage';
@@ -27,14 +28,14 @@ import MenuPage from './pages/MenuPage';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { currentUser, loading } = useAuth();
-  if (loading) return null; // Let the splash screen handle it
+  if (loading) return <LoadingScreen message="Verifying Session" />;
   if (!currentUser) return <Navigate to="/" />;
   return <>{children}</>;
 }
 
 function AuthRoute({ children }: { children: React.ReactNode }) {
   const { currentUser, loading } = useAuth();
-  if (loading) return null; // Let the splash screen handle it
+  if (loading) return <LoadingScreen message="Initializing" />;
   if (currentUser) return <Navigate to="/dashboard" />;
   return <>{children}</>;
 }
