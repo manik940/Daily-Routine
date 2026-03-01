@@ -359,8 +359,7 @@ const CurrentTaskBox = ({ todayTodos, todayRoutine, theme }: { todayTodos: any[]
           const title = "এই সময়ের কাজ 🕒";
           const body = `কাজ: ${currentTask.task}\n` +
                        `সময়সীমা: ${formatTime(currentTask.startTime)} - ${formatTime(currentTask.endTime)}\n` +
-                       `মোট সময়: ${totalDurationStr}\n` +
-                       `বাকি সময়: ${remainingTimeStr}`;
+                       `মোট সময়: ${totalDurationStr}`;
           
           const options: any = {
             body: body,
@@ -370,7 +369,7 @@ const CurrentTaskBox = ({ todayTodos, todayRoutine, theme }: { todayTodos: any[]
             badge: '/icon.png',
             silent: true,
             dir: 'auto',
-            requireInteraction: true // Keep it visible on Android
+            requireInteraction: true
           };
 
           // If it's a new task, make it loud and renotify
@@ -378,14 +377,14 @@ const CurrentTaskBox = ({ todayTodos, todayRoutine, theme }: { todayTodos: any[]
             options.silent = false;
             options.renotify = true;
             setNotifiedTaskId(currentTask.id);
-          }
-
-          // Use service worker to show notification for better background support on Android
-          if ("serviceWorker" in navigator) {
-            const registration = await navigator.serviceWorker.ready;
-            registration.showNotification(title, options);
-          } else {
-            new Notification(title, options);
+            
+            // Use service worker to show notification
+            if ("serviceWorker" in navigator) {
+              const registration = await navigator.serviceWorker.ready;
+              registration.showNotification(title, options);
+            } else {
+              new Notification(title, options);
+            }
           }
         }
       } catch (e) {
@@ -393,15 +392,8 @@ const CurrentTaskBox = ({ todayTodos, todayRoutine, theme }: { todayTodos: any[]
       }
     };
 
-    // Initial trigger
     triggerNotification();
-
-    // Update notification every minute to refresh the "Remaining Time"
-    const interval = setInterval(triggerNotification, 60000);
-    return () => {
-      clearInterval(interval);
-    };
-  }, [currentTask?.id, remainingTimeStr.split(':')[0], totalDurationStr, notifiedTaskId, todayTodos.length]);
+  }, [currentTask?.id, totalDurationStr, notifiedTaskId, todayTodos.length]);
 
   return (
     <div className="bg-white rounded-2xl p-5 mb-6 shadow-sm border border-gray-100 relative overflow-hidden">
