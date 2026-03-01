@@ -392,19 +392,7 @@ const CurrentTaskBox = ({ todayTodos, todayRoutine, theme }: { todayTodos: any[]
 
   // Notification Logic for Current Task
   useEffect(() => {
-    const closeNotification = async () => {
-      if ("serviceWorker" in navigator) {
-        const registration = await navigator.serviceWorker.ready;
-        const notifications = await registration.getNotifications({ tag: 'current-task-notification' });
-        notifications.forEach(n => n.close());
-      }
-    };
-
     if (!currentTask) {
-      closeNotification();
-      if (todayTodos.length > 0 && notifiedTaskId !== null) {
-        setNotifiedTaskId(null);
-      }
       return;
     }
 
