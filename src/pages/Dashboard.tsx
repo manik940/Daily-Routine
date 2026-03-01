@@ -5,8 +5,10 @@ import BannerSlider from "../components/BannerSlider";
 import { useAuth } from "../contexts/AuthContext";
 import { useLanguage } from "../contexts/LanguageContext";
 import { useTheme } from "../contexts/ThemeContext";
+import { parseTime, formatTime, getBanglaDate, getBanglaDigits } from "../utils/timeUtils";
 import { CheckSquare, Clock, Target, PlusCircle, ChevronRight, AlarmClock } from "lucide-react";
 import { motion } from "framer-motion";
+import toast from "react-hot-toast";
 import { ref, onValue } from "firebase/database";
 import { db } from "../firebase";
 
@@ -16,9 +18,17 @@ export default function Dashboard() {
   const { theme } = useTheme();
   const navigate = useNavigate();
   
+  const [currentTime, setCurrentTime] = useState(new Date());
   const [todayRoutine, setTodayRoutine] = useState<any[]>([]);
   const [todayTodos, setTodayTodos] = useState<any[]>([]);
   const [todayGoals, setTodayGoals] = useState<any[]>([]);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 60000);
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     if (!currentUser) return;
@@ -106,27 +116,7 @@ export default function Dashboard() {
   };
 
   // Helper to format date in Bangla
-  const getBanglaDate = () => {
-    const date = new Date();
-    const day = date.getDate();
-    const month = date.getMonth();
-    const dayOfWeek = date.getDay();
-
-    const banglaMonths = [
-        "জানুয়ারি", "ফেব্রুয়ারি", "মার্চ", "এপ্রিল", "মে", "জুন",
-        "জুলাই", "আগস্ট", "সেপ্টেম্বর", "অক্টোবর", "নভেম্বর", "ডিসেম্বর"
-    ];
-    
-    const banglaDays = [
-        "রবিবার", "সোমবার", "মঙ্গলবার", "বুধবার", "বৃহস্পতিবার", "শুক্রবার", "শনিবার"
-    ];
-
-    const banglaDigits = (num: number) => {
-        return num.toString().replace(/\d/g, (d) => "০১২৩৪৫৬৭৮৯"[parseInt(d)]);
-    };
-
-    return `${banglaDigits(day)} শে ${banglaMonths[month]}, ${banglaDays[dayOfWeek]}`;
-  };
+  const banglaDateString = getBanglaDate(currentTime);
 
   const [showSetup, setShowSetup] = useState(false);
   const [audioUnlocked, setAudioUnlocked] = useState(false);
@@ -253,8 +243,6 @@ export default function Dashboard() {
     }
   };
 
-  const banglaDateString = getBanglaDate();
-
   return (
     <DashboardLayout>
       {/* Welcome Box */}
@@ -321,24 +309,39 @@ export default function Dashboard() {
               </button>
               <button 
                 onClick={async () => {
-                  if ("Notification" in window && Notification.permission === "granted") {
-                    const options = { 
-                      body: "এটি একটি টেস্ট নোটিফিকেশন", 
-                      icon: 'https://picsum.photos/seed/app/192/192',
-                      vibrate: [100, 50, 100]
-                    };
-                    try {
-                      if ("serviceWorker" in navigator) {
-                        const reg = await navigator.serviceWorker.ready;
-                        await reg.showNotification("টেস্ট নোটিফিকেশন 🔔", options);
-                      } else {
-                        new Notification("টেস্ট নোটিফিকেশন 🔔", options);
+                  try {
+                    const hasNotification = typeof window !== 'undefined' && "Notification" in window;
+                    if (hasNotification && (window as any).Notification && (window as any).Notification.permission === "granted") {
+                      const options = { 
+                        body: "এটি একটি টেস্ট নোটিফিকেশন", 
+                        icon: 'https://picsum.photos/seed/app/192/192',
+                        vibrate: [100, 50, 100]
+                      };
+                      try {
+                        if (typeof navigator !== 'undefined' && "serviceWorker" in navigator) {
+                          const reg = await Promise.race([
+                            navigator.serviceWorker.ready,
+                            new Promise((_, reject) => setTimeout(() => reject(new Error("SW Timeout")), 2000))
+                          ]) as any;
+                          
+                          if (reg && reg.showNotification) {
+                            await reg.showNotification("টেস্ট নোটিফিকেশন 🔔", options);
+                          } else {
+                            new (window as any).Notification("টেস্ট নোটিফিকেশন 🔔", options);
+                          }
+                        } else {
+                          new (window as any).Notification("টেস্ট নোটিফিকেশন 🔔", options);
+                        }
+                      } catch (e) {
+                        try {
+                          new (window as any).Notification("টেস্ট নোটিফিকেশন 🔔", options);
+                        } catch (e2) {}
                       }
-                    } catch (e) {
-                      new Notification("টেস্ট নোটিফিকেশন 🔔", options);
+                    } else {
+                      toast.error("আগে পারমিশন দিন");
                     }
-                  } else {
-                    alert("আগে পারমিশন দিন");
+                  } catch (err) {
+                    console.warn("Notification test error:", err);
                   }
                 }}
                 className="flex-1 bg-white border border-amber-200 text-amber-700 px-3 py-2 rounded-lg text-xs font-bold shadow-sm active:scale-95"
@@ -550,28 +553,20 @@ const CurrentTaskBox = ({ todayTodos, todayRoutine, theme }: { todayTodos: any[]
     };
 
     requestPermission();
-    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(timer);
   }, []);
 
-  const parseTime = (timeStr: string) => {
-    if (!timeStr) return null;
-    const [hours, minutes] = timeStr.split(':').map(Number);
-    const d = new Date();
-    d.setHours(hours, minutes, 0, 0);
-    return d;
-  };
+  const parseTimeLocal = (timeStr: string) => parseTime(timeStr, currentTime);
 
   // Sort tasks by start time
   const sortedTasks = [...todayTodos].sort((a, b) => {
-    const startA = parseTime(a.startTime)?.getTime() || 0;
-    const startB = parseTime(b.startTime)?.getTime() || 0;
+    const startA = parseTimeLocal(a.startTime)?.getTime() || 0;
+    const startB = parseTimeLocal(b.startTime)?.getTime() || 0;
     return startA - startB;
   });
 
   const currentTask = sortedTasks.find(task => {
-    const start = parseTime(task.startTime);
-    const end = parseTime(task.endTime);
+    const start = parseTimeLocal(task.startTime);
+    const end = parseTimeLocal(task.endTime);
     if (!start || !end) return false;
     
     if (end < start) end.setDate(end.getDate() + 1);
@@ -579,17 +574,6 @@ const CurrentTaskBox = ({ todayTodos, todayRoutine, theme }: { todayTodos: any[]
     const now = currentTime.getTime();
     return now >= start.getTime() && now < end.getTime();
   });
-
-  const formatTime = (time24: string) => {
-    if (!time24) return "";
-    const [hours, minutes] = time24.split(':');
-    let h = parseInt(hours, 10);
-    const m = parseInt(minutes, 10);
-    const ampm = h >= 12 ? 'PM' : 'AM';
-    h = h % 12;
-    h = h ? h : 12; 
-    return `${h}:${m.toString().padStart(2, '0')} ${ampm}`;
-  };
 
   let remainingTimeStr = "";
   let totalDurationStr = "";

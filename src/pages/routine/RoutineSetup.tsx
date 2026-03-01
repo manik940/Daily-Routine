@@ -108,7 +108,7 @@ export default function RoutineSetup() {
     // Validation: Check for empty fields
     const isValid = daySubjects.every(sub => sub.subject.trim() !== "" && sub.startTime !== "" && sub.endTime !== "");
     if (!isValid && daySubjects.length > 0) {
-        alert(language === 'bn' ? "দয়া করে সব তথ্য পূরণ করুন" : "Please fill in all fields");
+        toast.error(language === 'bn' ? "দয়া করে সব তথ্য পূরণ করুন" : "Please fill in all fields");
         return;
     }
     setRoutineData({ ...routineData, [currentDay]: daySubjects });
@@ -132,7 +132,7 @@ export default function RoutineSetup() {
               setDaySubjects(JSON.parse(JSON.stringify(prevData)));
               setSubjectCount(prevData.length);
           } else {
-              alert(language === 'bn' ? "আগের দিনের কোনো রুটিন নেই" : "No routine for previous day");
+              toast.error(language === 'bn' ? "আগের দিনের কোনো রুটিন নেই" : "No routine for previous day");
               setIsSameAsPrevious(false);
           }
       }

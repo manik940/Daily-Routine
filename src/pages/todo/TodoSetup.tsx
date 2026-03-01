@@ -146,7 +146,7 @@ export default function TodoSetup() {
               }
               setDayTasks(JSON.parse(JSON.stringify(prevData)));
           } else {
-              alert(language === 'bn' ? "আগের দিনের কোনো কাজ নেই" : "No tasks for previous day");
+              toast.error(language === 'bn' ? "আগের দিনের কোনো কাজ নেই" : "No tasks for previous day");
               setIsSameAsPrevious(false);
           }
       }
@@ -159,7 +159,7 @@ export default function TodoSetup() {
     // Validation: Check for empty fields
     const isValid = dayTasks.every(task => task.task.trim() !== "" && task.startTime !== "" && task.endTime !== "");
     if (!isValid && dayTasks.length > 0) {
-        alert(language === 'bn' ? "দয়া করে সব তথ্য পূরণ করুন" : "Please fill in all fields");
+        toast.error(language === 'bn' ? "দয়া করে সব তথ্য পূরণ করুন" : "Please fill in all fields");
         return;
     }
     setTodoData({ ...todoData, [currentDay]: dayTasks });

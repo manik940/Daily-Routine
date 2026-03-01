@@ -3,6 +3,7 @@ import { ref, onValue, set, get } from "firebase/database";
 import { db } from "../../firebase";
 import { useAuth } from "../../contexts/AuthContext";
 import { useLanguage } from "../../contexts/LanguageContext";
+import { parseTime, formatTime, getBanglaDate, getBanglaDigits } from "../../utils/timeUtils";
 import DashboardLayout from "../../components/DashboardLayout";
 import { CheckSquare, AlarmClock, Check } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -47,44 +48,7 @@ export default function TodayTodo() {
     }
   }, [completedTasks, currentUser, todayStr, isLoaded]);
 
-  // Helper to format date in Bangla: "Day, Date Month Year"
-  const getBanglaDate = () => {
-    const date = new Date();
-    const day = date.getDate();
-    const month = date.getMonth();
-    const dayOfWeek = date.getDay();
-    const year = date.getFullYear();
-
-    const banglaMonths = [
-        "জানুয়ারি", "ফেব্রুয়ারি", "মার্চ", "এপ্রিল", "মে", "জুন",
-        "জুলাই", "আগস্ট", "সেপ্টেম্বর", "অক্টোবর", "নভেম্বর", "ডিসেম্বর"
-    ];
-    
-    const banglaDays = [
-        "রবিবার", "সোমবার", "মঙ্গলবার", "বুধবার", "বৃহস্পতিবার", "শুক্রবার", "শনিবার"
-    ];
-
-    const banglaDigits = (num: number) => {
-        return num.toString().replace(/\d/g, (d) => "০১২৩৪৫৬৭৮৯"[parseInt(d)]);
-    };
-
-    return `${banglaDays[dayOfWeek]}, ${banglaDigits(day)} ${banglaMonths[month]} ${banglaDigits(year)}`;
-  };
-
   const banglaDateString = getBanglaDate();
-
-  // Helper to format time to 12h with English digits
-  const formatTime = (time24: string) => {
-    if (!time24) return "";
-    const [hours, minutes] = time24.split(':');
-    let h = parseInt(hours, 10);
-    const m = parseInt(minutes, 10);
-    const ampm = h >= 12 ? 'PM' : 'AM';
-    h = h % 12;
-    h = h ? h : 12; 
-    
-    return `${h}:${m.toString().padStart(2, '0')} ${ampm}`;
-  };
 
   useEffect(() => {
     if (currentUser) {

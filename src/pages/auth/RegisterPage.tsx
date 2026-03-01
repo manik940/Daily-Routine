@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { updatePassword } from "firebase/auth";
 import { ref, set } from "firebase/database";
 import { auth, db } from "../../firebase";
+import toast from "react-hot-toast";
 import AuthLayout from "../../components/AuthLayout";
 import PinInput from "../../components/PinInput";
 import { useLanguage } from "../../contexts/LanguageContext";
@@ -54,13 +55,13 @@ export default function RegisterPage() {
     const { name, roll, class: userClass, group, sscYear, section, shift, school } = formData;
     
     if (!name || !roll || !userClass || !section || !shift || !school) {
-      alert("দয়া করে সম্পূর্ণ ফর্মটি পূরণ করুন");
+      toast.error("দয়া করে সম্পূর্ণ ফর্মটি পূরণ করুন");
       return;
     }
 
     if (userClass === "9" || userClass === "10") {
       if (!group || !sscYear) {
-        alert("দয়া করে সম্পূর্ণ ফর্মটি পূরণ করুন");
+        toast.error("দয়া করে সম্পূর্ণ ফর্মটি পূরণ করুন");
         return;
       }
     }
