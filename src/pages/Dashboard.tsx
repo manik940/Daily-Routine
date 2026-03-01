@@ -186,9 +186,22 @@ export default function Dashboard() {
   );
 }
 
-// Persistent notification trackers (survive navigation, reset on page reload)
-let lastNotifiedTaskId: string | null = null;
-let lastNotifiedRoutineIds: Set<string> = new Set();
+// Persistent notification trackers (survive navigation and page reloads)
+const getInitialTaskId = () => {
+  return localStorage.getItem('lastNotifiedTaskId');
+};
+
+const getInitialRoutineIds = () => {
+  try {
+    const stored = localStorage.getItem('lastNotifiedRoutineIds');
+    return stored ? new Set<string>(JSON.parse(stored) as string[]) : new Set<string>();
+  } catch (e) {
+    return new Set<string>();
+  }
+};
+
+let lastNotifiedTaskId: string | null = getInitialTaskId();
+let lastNotifiedRoutineIds: Set<string> = getInitialRoutineIds();
 
 // Current Task Box Component
 const CurrentTaskBox = ({ todayTodos, todayRoutine, theme }: { todayTodos: any[], todayRoutine: any[], theme: string }) => {
@@ -196,13 +209,31 @@ const CurrentTaskBox = ({ todayTodos, todayRoutine, theme }: { todayTodos: any[]
   const [notifiedTaskId, setNotifiedTaskId] = useState<string | null>(lastNotifiedTaskId);
   const [notifiedRoutineIds, setNotifiedRoutineIds] = useState<Set<string>>(lastNotifiedRoutineIds);
 
-  // Update global trackers whenever state changes to persist across navigation
+  // Update global trackers and localStorage whenever state changes to persist across navigation and reloads
   useEffect(() => {
     lastNotifiedTaskId = notifiedTaskId;
+    if (notifiedTaskId) {
+      localStorage.setItem('lastNotifiedTaskId', notifiedTaskId);
+    } else {
+      localStorage.removeItem('lastNotifiedTaskId');
+    }
   }, [notifiedTaskId]);
 
   useEffect(() => {
     lastNotifiedRoutineIds = notifiedRoutineIds;
+    localStorage.setItem('lastNotifiedRoutineIds', JSON.stringify(Array.from(notifiedRoutineIds)));
+    
+    // Cleanup old routine IDs (older than today) to keep storage clean
+    if (notifiedRoutineIds.size > 50) {
+      const today = new Date().toDateString();
+      const filtered = Array.from(notifiedRoutineIds as Set<string>).filter((id: string) => id.startsWith(today));
+      if (filtered.length !== notifiedRoutineIds.size) {
+        const newSet = new Set<string>(filtered);
+        setNotifiedRoutineIds(newSet);
+        lastNotifiedRoutineIds = newSet;
+        localStorage.setItem('lastNotifiedRoutineIds', JSON.stringify(filtered));
+      }
+    }
   }, [notifiedRoutineIds]);
 
   useEffect(() => {
