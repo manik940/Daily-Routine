@@ -33,12 +33,16 @@ export default function Dashboard() {
       const data = snapshot.val();
       if (data) {
         const list: any[] = [];
-        Object.values(data).forEach((routine: any) => {
+        Object.entries(data).forEach(([routineId, routine]: [string, any]) => {
           if (routine.days && routine.days[today]) {
             const daySubjects = Array.isArray(routine.days[today]) 
               ? routine.days[today] 
               : Object.values(routine.days[today]);
-            list.push(...daySubjects.filter(Boolean));
+            const subjectsWithId = daySubjects.filter(Boolean).map((s: any, idx: number) => ({
+              ...s,
+              id: s.id || `${routineId}-${today}-${idx}`
+            }));
+            list.push(...subjectsWithId);
           }
         });
         setTodayRoutine(list);
@@ -53,12 +57,16 @@ export default function Dashboard() {
       const data = snapshot.val();
       if (data) {
         const list: any[] = [];
-        Object.values(data).forEach((todo: any) => {
+        Object.entries(data).forEach(([todoId, todo]: [string, any]) => {
           if (todo.days && todo.days[today]) {
             const dayTasks = Array.isArray(todo.days[today]) 
               ? todo.days[today] 
               : Object.values(todo.days[today]);
-            list.push(...dayTasks.filter(Boolean));
+            const tasksWithId = dayTasks.filter(Boolean).map((t: any, idx: number) => ({
+              ...t,
+              id: t.id || `${todoId}-${today}-${idx}`
+            }));
+            list.push(...tasksWithId);
           }
         });
         setTodayTodos(list);
@@ -392,9 +400,9 @@ const CurrentTaskBox = ({ todayTodos, todayRoutine, theme }: { todayTodos: any[]
       }
     };
 
-    if (!currentTask || todayTodos.length === 0) {
+    if (!currentTask) {
       closeNotification();
-      if (notifiedTaskId !== null) {
+      if (todayTodos.length > 0 && notifiedTaskId !== null) {
         setNotifiedTaskId(null);
       }
       return;
