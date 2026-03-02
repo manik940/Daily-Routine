@@ -204,40 +204,47 @@ export default function RegisterPage() {
   );
 
   const renderStep2 = () => (
-    <form onSubmit={handleRegister} className="space-y-6">
-      
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-4 text-center">Password (6 Digits)</label>
-        <PinInput 
-            length={6}
-            onChange={(val) => setFormData({ ...formData, password: val })}
-        />
+    <form onSubmit={handleRegister} className="space-y-8">
+      <div className="bg-emerald-50 p-6 rounded-2xl border border-emerald-100">
+        <div className="space-y-6">
+          <div>
+            <label className="block text-sm font-bold text-gray-700 mb-4 text-center">
+              ৬ সংখ্যার পাসওয়ার্ড দিন
+            </label>
+            <PinInput 
+                length={6}
+                onChange={(val) => setFormData({ ...formData, password: val })}
+            />
+          </div>
+
+          <div className="pt-4 border-t border-emerald-100">
+            <label className="block text-sm font-bold text-gray-700 mb-4 text-center">
+              পাসওয়ার্ডটি নিশ্চিত করুন
+            </label>
+            <PinInput 
+                length={6}
+                onChange={(val) => setFormData({ ...formData, confirmPassword: val })}
+            />
+          </div>
+        </div>
       </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-4 text-center">Confirm Password</label>
-        <PinInput 
-            length={6}
-            onChange={(val) => setFormData({ ...formData, confirmPassword: val })}
-        />
-      </div>
-
-      {error && <p className="text-red-500 text-sm text-center">{error}</p>}
+      {error && <p className="text-red-500 text-sm text-center font-medium">{error}</p>}
 
       <div className="flex gap-4">
         <button
             type="button"
             onClick={() => setStep(1)}
-            className="flex-1 bg-gray-200 text-gray-800 font-semibold py-3 px-6 rounded-lg"
+            className="flex-1 bg-gray-100 text-gray-600 font-bold py-4 px-6 rounded-xl hover:bg-gray-200 transition-colors"
         >
-            Back
+            পিছনে
         </button>
         <button
             type="submit"
-            disabled={loading || formData.password.length < 6}
-            className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-6 rounded-lg shadow-md flex items-center justify-center gap-2"
+            disabled={loading || formData.password.length < 6 || formData.confirmPassword.length < 6}
+            className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 px-6 rounded-xl shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
         >
-            {loading ? "Registering..." : t('register')}
+            {loading ? "অপেক্ষা করুন..." : "কনফার্ম করুন"}
         </button>
       </div>
     </form>

@@ -35,9 +35,9 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 }
 
 function AuthRoute({ children }: { children: React.ReactNode }) {
-  const { currentUser, loading } = useAuth();
+  const { currentUser, userData, loading } = useAuth();
   if (loading) return <LoadingScreen message="Initializing" />;
-  if (currentUser) return <Navigate to="/dashboard" />;
+  if (currentUser && userData) return <Navigate to="/dashboard" />;
   return <>{children}</>;
 }
 

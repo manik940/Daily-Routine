@@ -142,13 +142,27 @@ export default function EmailInputPage() {
             </div>
             
             <div className="text-center">
-              <p className="text-gray-700 mb-6">
-                ইউজারটির ইমেইলে একটি ভেরিফিকেশন লিংক পাঠানো হয়েছে। দয়া করে আপনার ইমেইল চেক করুন এবং লিংকে ক্লিক করে ভেরিফাই করুন।
+              <div className="bg-emerald-50 p-6 rounded-2xl mb-6 border border-emerald-100">
+                <div className="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <span className="text-3xl">📧</span>
+                </div>
+                <p className="text-gray-700 font-medium leading-relaxed">
+                  আপনার ইমেইলে একটি ভেরিফিকেশন লিংক পাঠানো হয়েছে। দয়া করে আপনার ইমেইল চেক করুন এবং লিংকে ক্লিক করে ভেরিফাই করুন।
+                </p>
+              </div>
+              
+              <p className="text-sm text-gray-500 mb-6 italic">
+                * ইমেইল ভেরিফাই করার পর নিচের বাটনটি সচল হবে।
               </p>
               
               <button
                 onClick={() => navigate("/auth/register", { state: { email } })}
-                className={`w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-6 rounded-lg shadow-md flex items-center justify-center gap-2 transition-opacity duration-300 ${isVerified ? 'opacity-100 visible' : 'opacity-0 invisible'}`}
+                disabled={!isVerified}
+                className={`w-full font-semibold py-4 px-6 rounded-xl shadow-md flex items-center justify-center gap-2 transition-all duration-500 ${
+                  isVerified 
+                    ? 'bg-emerald-600 hover:bg-emerald-700 text-white opacity-100 scale-100' 
+                    : 'bg-gray-300 text-gray-500 opacity-50 cursor-not-allowed scale-95'
+                }`}
               >
                 এগিয়ে যান <ArrowRight size={20} />
               </button>
