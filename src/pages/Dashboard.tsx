@@ -173,9 +173,9 @@ export default function Dashboard() {
             theme={theme}
         />
         <SquareEmojiCard 
-            to="/goal/setup"
-            title={t('daily_goal_setup')}
-            emoji="➕"
+            to="/setup-menu"
+            title="রুটিন সেটআপ"
+            emoji="⚙️"
             theme={theme}
             isAction={true}
         />

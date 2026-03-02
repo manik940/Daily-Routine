@@ -26,6 +26,7 @@ import TodayTodo from './pages/today/TodayTodo';
 import TodayGoal from './pages/today/TodayGoal';
 import TomorrowGoal from './pages/goal/TomorrowGoal';
 import MenuPage from './pages/MenuPage';
+import SetupMenu from './pages/SetupMenu';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { currentUser, loading } = useAuth();
@@ -67,6 +68,7 @@ export default function App() {
         
         <Route path="/goal/setup" element={<ProtectedRoute><GoalSetup /></ProtectedRoute>} />
         <Route path="/goal/tomorrow" element={<ProtectedRoute><TomorrowGoal /></ProtectedRoute>} />
+        <Route path="/setup-menu" element={<ProtectedRoute><SetupMenu /></ProtectedRoute>} />
 
         <Route path="/today/routine" element={<ProtectedRoute><TodayRoutine /></ProtectedRoute>} />
         <Route path="/today/todo" element={<ProtectedRoute><TodayTodo /></ProtectedRoute>} />
