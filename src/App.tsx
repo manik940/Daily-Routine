@@ -4,7 +4,6 @@ import { Toaster, toast } from 'react-hot-toast';
 import { useAuth } from './contexts/AuthContext';
 import LoadingScreen from './components/common/LoadingScreen';
 import ScrollToTop from './components/common/ScrollToTop';
-import NotificationManager from './components/NotificationManager';
 import LandingPage from './pages/auth/LandingPage';
 import EmailInputPage from './pages/auth/EmailInputPage';
 import PasswordPage from './pages/auth/PasswordPage';
@@ -64,7 +63,6 @@ export default function App() {
   return (
     <Router>
       <ScrollToTop />
-      <NotificationManager />
       <Toaster position="top-center" toastOptions={{ duration: 4000 }} />
       <Routes>
         {/* Auth Routes */}

@@ -4,8 +4,7 @@ import { useAuth } from "../contexts/AuthContext";
 import { useLanguage } from "../contexts/LanguageContext";
 import DashboardLayout from "../components/DashboardLayout";
 import UserAvatar from "../components/UserAvatar";
-import { Copy, Check, ArrowLeft, Bell } from "lucide-react";
-import { sendPushNotification } from "../services/notificationService";
+import { Copy, Check, ArrowLeft } from "lucide-react";
 import toast from "react-hot-toast";
 
 export default function Profile() {
@@ -19,19 +18,6 @@ export default function Profile() {
         navigator.clipboard.writeText(userData.uniqueId);
         setCopied(true);
         setTimeout(() => setCopied(false), 2000);
-    }
-  };
-
-  const testNotification = async () => {
-    const res = await sendPushNotification({
-        title: "টেস্ট নোটিফিকেশন 🔔",
-        message: "আপনার নোটিফিকেশন সিস্টেমটি সঠিকভাবে কাজ করছে!",
-    });
-    if (res.success) {
-        toast.success("নোটিফিকেশন পাঠানো হয়েছে!");
-    } else {
-        toast.error("নোটিফিকেশন পাঠাতে ব্যর্থ হয়েছে!");
-        console.error(res.error);
     }
   };
 
@@ -72,16 +58,6 @@ export default function Profile() {
                     </div>
                     <button onClick={copyId} className="p-2 bg-white rounded-full shadow-sm text-emerald-600 hover:bg-emerald-100 transition-colors">
                         {copied ? <Check size={20} /> : <Copy size={20} />}
-                    </button>
-                </div>
-
-                <div className="mb-6">
-                    <button 
-                        onClick={testNotification}
-                        className="w-full flex items-center justify-center gap-2 py-3 bg-white border-2 border-emerald-500 text-emerald-600 rounded-xl font-bold hover:bg-emerald-50 transition-all active:scale-95"
-                    >
-                        <Bell size={20} />
-                        টেস্ট নোটিফিকেশন পাঠান
                     </button>
                 </div>
 
