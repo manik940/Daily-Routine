@@ -45,10 +45,10 @@ function AuthRoute({ children }: { children: React.ReactNode }) {
 export default function App() {
   useEffect(() => {
     const handleOnline = () => {
-      toast.success("ইন্টারনেট কানেকশন ফিরে এসেছে!", { id: 'network-status' });
+      toast.success("ইন্টারনেট কানেকশন ফিরে এসেছে!", { id: 'network-status', duration: 4000 });
     };
     const handleOffline = () => {
-      toast.error("ইন্টারনেট কানেকশন বিচ্ছিন্ন হয়েছে!", { id: 'network-status', duration: Infinity });
+      toast.error("ইন্টারনেট কানেকশন বিচ্ছিন্ন হয়েছে!", { id: 'network-status', duration: 4000 });
     };
 
     window.addEventListener('online', handleOnline);
@@ -63,7 +63,7 @@ export default function App() {
   return (
     <Router>
       <ScrollToTop />
-      <Toaster position="top-center" toastOptions={{ duration: 3000 }} />
+      <Toaster position="top-center" toastOptions={{ duration: 4000 }} />
       <Routes>
         {/* Auth Routes */}
         <Route path="/" element={<AuthRoute><LandingPage /></AuthRoute>} />
