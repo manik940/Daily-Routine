@@ -18,10 +18,20 @@ export default function Dashboard() {
   const navigate = useNavigate();
   
   const [currentTime, setCurrentTime] = useState(new Date());
-  const [todayRoutine, setTodayRoutine] = useState<any[]>([]);
-  const [todayTodos, setTodayTodos] = useState<any[]>([]);
-  const [todayGoals, setTodayGoals] = useState<any[]>([]);
-  const [loadingData, setLoadingData] = useState(true);
+  const [todayRoutine, setTodayRoutine] = useState<any[]>(() => {
+    try { return JSON.parse(localStorage.getItem(`routine_${currentUser?.uid}`) || "[]"); } catch { return []; }
+  });
+  const [todayTodos, setTodayTodos] = useState<any[]>(() => {
+    try { return JSON.parse(localStorage.getItem(`todos_${currentUser?.uid}`) || "[]"); } catch { return []; }
+  });
+  const [todayGoals, setTodayGoals] = useState<any[]>(() => {
+    try { return JSON.parse(localStorage.getItem(`goals_${currentUser?.uid}`) || "[]"); } catch { return []; }
+  });
+  
+  // If we have cached data, don't show loading spinner
+  const [loadingData, setLoadingData] = useState(() => {
+    return !(localStorage.getItem(`routine_${currentUser?.uid}`) && localStorage.getItem(`todos_${currentUser?.uid}`));
+  });
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -33,7 +43,6 @@ export default function Dashboard() {
   useEffect(() => {
     if (!currentUser) return;
 
-    setLoadingData(true);
     const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
     const today = days[new Date().getDay()];
     const dateStr = new Date().toISOString().split('T')[0];
@@ -67,8 +76,10 @@ export default function Dashboard() {
           }
         });
         setTodayRoutine(list);
+        localStorage.setItem(`routine_${currentUser.uid}`, JSON.stringify(list));
       } else {
         setTodayRoutine([]);
+        localStorage.removeItem(`routine_${currentUser.uid}`);
       }
       routineLoaded = true;
       checkAllLoaded();
@@ -93,8 +104,10 @@ export default function Dashboard() {
           }
         });
         setTodayTodos(list);
+        localStorage.setItem(`todos_${currentUser.uid}`, JSON.stringify(list));
       } else {
         setTodayTodos([]);
+        localStorage.removeItem(`todos_${currentUser.uid}`);
       }
       todoLoaded = true;
       checkAllLoaded();
@@ -106,8 +119,10 @@ export default function Dashboard() {
       const data = snapshot.val();
       if (data) {
         setTodayGoals(Object.values(data));
+        localStorage.setItem(`goals_${currentUser.uid}`, JSON.stringify(Object.values(data)));
       } else {
         setTodayGoals([]);
+        localStorage.removeItem(`goals_${currentUser.uid}`);
       }
       goalLoaded = true;
       checkAllLoaded();
