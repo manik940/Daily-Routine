@@ -44,20 +44,21 @@ export const sendPushNotification = async (payload: NotificationPayload) => {
   try {
     const response = await fetch("https://onesignal.com/api/v1/notifications", {
       method: "POST",
+      mode: "cors",
       headers: {
         "Content-Type": "application/json; charset=utf-8",
-        Authorization: `Basic ${ONESIGNAL_REST_API_KEY}`,
+        "Authorization": `Basic ${ONESIGNAL_REST_API_KEY}`,
       },
       body: JSON.stringify({
         app_id: ONESIGNAL_APP_ID,
-        included_segments: ["All"], // Sends to all users by default
+        included_segments: ["All"],
         headings: { en: payload.title },
         contents: { en: payload.message },
         data: payload.data || {},
         big_picture: payload.imageUrl || "",
         large_icon: NOTIFICATION_ICON,
         small_icon: "ic_stat_onesignal_default",
-        android_accent_color: "FFFFFFFF", // White theme as requested
+        android_accent_color: "FFFFFFFF",
         android_led_color: "FFFFFFFF",
         android_visibility: 1,
         priority: 10,

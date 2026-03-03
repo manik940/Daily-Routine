@@ -7,6 +7,8 @@ import { sendPushNotification, getRandomQuote } from '../services/notificationSe
 export default function NotificationManager() {
   const { currentUser } = useAuth();
   const sentNotifications = useRef<Set<string>>(new Set());
+  const todayRoutineRef = useRef<any[]>([]);
+  const todayTodosRef = useRef<any[]>([]);
 
   useEffect(() => {
     if (!currentUser) return;
@@ -18,13 +20,10 @@ export default function NotificationManager() {
     const routineRef = ref(db, `routines/${currentUser.uid}`);
     const todoRef = ref(db, `todos/${currentUser.uid}`);
 
-    let todayRoutine: any[] = [];
-    let todayTodos: any[] = [];
-
     const unsubRoutine = onValue(routineRef, (snapshot) => {
       const data = snapshot.val();
+      const list: any[] = [];
       if (data) {
-        const list: any[] = [];
         Object.entries(data).forEach(([routineId, routine]: [string, any]) => {
           if (routine.days && routine.days[today]) {
             const daySubjects = Array.isArray(routine.days[today]) 
@@ -33,14 +32,14 @@ export default function NotificationManager() {
             list.push(...daySubjects.filter(Boolean));
           }
         });
-        todayRoutine = list;
       }
+      todayRoutineRef.current = list;
     });
 
     const unsubTodo = onValue(todoRef, (snapshot) => {
       const data = snapshot.val();
+      const list: any[] = [];
       if (data) {
-        const list: any[] = [];
         Object.entries(data).forEach(([todoId, todo]: [string, any]) => {
           if (todo.days && todo.days[today]) {
             const dayTasks = Array.isArray(todo.days[today]) 
@@ -49,8 +48,8 @@ export default function NotificationManager() {
             list.push(...dayTasks.filter(Boolean));
           }
         });
-        todayTodos = list;
       }
+      todayTodosRef.current = list;
     });
 
     const checkAndSendNotifications = () => {
@@ -61,6 +60,8 @@ export default function NotificationManager() {
       const currentFullDate = now.toISOString().split('T')[0];
       const todayDateStr = currentFullDate;
 
+      console.log(`Checking notifications at ${currentTimeStr}. Routine count: ${todayRoutineRef.current.length}, Todo count: ${todayTodosRef.current.length}`);
+
       // Clear sent notifications if the date has changed
       if (sentNotifications.current.size > 0) {
         const firstEntry = Array.from(sentNotifications.current)[0];
@@ -70,9 +71,10 @@ export default function NotificationManager() {
       }
 
       // 1. Check Todos
-      todayTodos.forEach((task) => {
+      todayTodosRef.current.forEach((task) => {
         const notificationId = `todo-${task.task}-${task.startTime}-${todayDateStr}`;
         if (task.startTime === currentTimeStr && !sentNotifications.current.has(notificationId)) {
+          console.log(`Triggering TODO notification: ${task.task}`);
           sendPushNotification({
             title: "এই সময়ের কাজ 🎯",
             message: `এখন তোমার কাজ: ${task.task}\nসময়সীমা: ${formatTime(task.startTime)} - ${formatTime(task.endTime)}\n\nদ্রুত কাজটি করে ফেলি! 🚀`,
@@ -83,9 +85,10 @@ export default function NotificationManager() {
       });
 
       // 2. Check Routine
-      todayRoutine.forEach((subject) => {
+      todayRoutineRef.current.forEach((subject) => {
         const notificationId = `routine-${subject.subject}-${subject.startTime}-${todayDateStr}`;
         if (subject.startTime === currentTimeStr && !sentNotifications.current.has(notificationId)) {
+          console.log(`Triggering ROUTINE notification: ${subject.subject}`);
           sendPushNotification({
             title: `${subject.subject} পড়ার সময় হয়ে গেছে! 📚`,
             message: `তোমার ${subject.subject} সময় হয়ে গেছে, দ্রুত পড়তে বসে যাও!!\nসময়সীমা: ${formatTime(subject.startTime)} - ${formatTime(subject.endTime)}\n\n${getRandomQuote()}`,
