@@ -53,14 +53,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (snapshot.exists()) {
         const data = snapshot.val();
         setUserData(data);
+        localStorage.setItem(`userData_${user.uid}`, JSON.stringify(data));
         console.log("User Data Fetched Successfully:", data); 
       } else {
         console.warn("No user data found in DB for uid:", user.uid);
         setUserData(null);
+        localStorage.removeItem(`userData_${user.uid}`);
       }
     } catch (error) {
       console.error("CRITICAL ERROR fetching user data:", error);
-      setUserData(null);
+      // Keep cached data if network fails
     } finally {
       setLoading(false);
     }
@@ -70,6 +72,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
       setCurrentUser(user);
       if (user) {
+        // Load from cache first for instant UI rendering
+        const cached = localStorage.getItem(`userData_${user.uid}`);
+        if (cached) {
+          try {
+            setUserData(JSON.parse(cached));
+            setLoading(false); // Remove loading screen immediately
+          } catch (e) {
+            console.error("Cache parse error", e);
+          }
+        }
+        // Fetch fresh data in background
         await fetchUserData(user);
       } else {
         setUserData(null);

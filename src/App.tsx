@@ -30,14 +30,14 @@ import SetupMenu from './pages/SetupMenu';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { currentUser, loading } = useAuth();
-  if (loading) return <LoadingScreen message="Verifying Session" />;
+  if (loading) return <LoadingScreen />;
   if (!currentUser) return <Navigate to="/" />;
   return <>{children}</>;
 }
 
 function AuthRoute({ children }: { children: React.ReactNode }) {
   const { currentUser, userData, loading } = useAuth();
-  if (loading) return <LoadingScreen message="Initializing" />;
+  if (loading) return <LoadingScreen />;
   if (currentUser && userData) return <Navigate to="/dashboard" />;
   return <>{children}</>;
 }
