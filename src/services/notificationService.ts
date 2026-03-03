@@ -54,9 +54,7 @@ export const sendPushNotification = async (payload: NotificationPayload) => {
 
     const contentType = response.headers.get("content-type");
     if (!contentType || !contentType.includes("application/json")) {
-      const text = await response.text();
-      console.error("Non-JSON response received from proxy:", text.substring(0, 100));
-      return { success: false, error: "Server returned non-JSON response" };
+      throw new Error("Server returned non-JSON response");
     }
 
     const result = await response.json();
@@ -65,12 +63,40 @@ export const sendPushNotification = async (payload: NotificationPayload) => {
       console.log("Notification sent successfully via proxy:", result);
       return { success: true, data: result };
     } else {
-      console.error("Failed to send notification via proxy:", result);
-      return { success: false, error: result };
+      throw new Error(JSON.stringify(result));
     }
   } catch (error) {
-    console.error("Error sending notification via proxy:", error);
-    return { success: false, error: error };
+    console.error("Proxy failed, trying direct OneSignal call as fallback:", error);
+    
+    // Fallback: Direct OneSignal call (might fail CORS in browser, but could work in some environments)
+    try {
+      const directResponse = await fetch("https://onesignal.com/api/v1/notifications", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json; charset=utf-8",
+          "Authorization": `Basic os_v2_app_tg7ss5ai3ndsdekzcndj5kruidhzmugmuw4e6enpzfewbv2v6ogb3hbny5nrqxvc54spluwxkt4hnuiw6nkl3fwd4jeyxxvpwexalii`,
+        },
+        body: JSON.stringify({
+          app_id: "99bf2974-08db-4721-9159-13469eaa3440",
+          included_segments: ["All"],
+          headings: { en: payload.title },
+          contents: { en: payload.message },
+          data: payload.data || {},
+          collapse_id: payload.collapseId,
+        }),
+      });
+      
+      const directResult = await directResponse.json();
+      if (directResponse.ok) {
+        console.log("Direct notification sent successfully:", directResult);
+        return { success: true, data: directResult };
+      } else {
+        return { success: false, error: directResult };
+      }
+    } catch (directError) {
+      console.error("Direct call also failed:", directError);
+      return { success: false, error: directError };
+    }
   }
 };
 
