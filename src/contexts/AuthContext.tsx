@@ -35,15 +35,26 @@ const AuthContext = createContext<AuthContextType>({
 export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [currentUser, setCurrentUser] = useState<User | null>(null);
-  const [userData, setUserData] = useState<UserData | null>(null);
-  const [loading, setLoading] = useState(true);
+  // Synchronous cache read for INSTANT loading (Zero delay)
+  const getCachedAuth = () => {
+    try { return localStorage.getItem("authUser") ? JSON.parse(localStorage.getItem("authUser")!) : null; } 
+    catch { return null; }
+  };
+  const getCachedData = () => {
+    try { return localStorage.getItem("userData") ? JSON.parse(localStorage.getItem("userData")!) : null; } 
+    catch { return null; }
+  };
+
+  const [currentUser, setCurrentUser] = useState<User | null>(getCachedAuth());
+  const [userData, setUserData] = useState<UserData | null>(getCachedData());
+  
+  // If we have cached data, loading is FALSE immediately. No loading screen will be shown.
+  const [loading, setLoading] = useState(!(getCachedAuth() && getCachedData()));
 
   const fetchUserData = async (user: User) => {
     try {
       const userRef = ref(db, `users/${user.uid}`);
       
-      // Add a timeout for the database fetch on mobile/PWA
       const timeoutPromise = new Promise((_, reject) => 
         setTimeout(() => reject(new Error("Database timeout")), 8000)
       );
@@ -53,16 +64,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       if (snapshot.exists()) {
         const data = snapshot.val();
         setUserData(data);
-        localStorage.setItem(`userData_${user.uid}`, JSON.stringify(data));
-        console.log("User Data Fetched Successfully:", data); 
+        localStorage.setItem("userData", JSON.stringify(data));
       } else {
-        console.warn("No user data found in DB for uid:", user.uid);
         setUserData(null);
-        localStorage.removeItem(`userData_${user.uid}`);
+        localStorage.removeItem("userData");
       }
     } catch (error) {
       console.error("CRITICAL ERROR fetching user data:", error);
-      // Keep cached data if network fails
     } finally {
       setLoading(false);
     }
@@ -70,21 +78,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (user) => {
-      setCurrentUser(user);
       if (user) {
-        // Load from cache first for instant UI rendering
-        const cached = localStorage.getItem(`userData_${user.uid}`);
-        if (cached) {
-          try {
-            setUserData(JSON.parse(cached));
-            setLoading(false); // Remove loading screen immediately
-          } catch (e) {
-            console.error("Cache parse error", e);
-          }
-        }
-        // Fetch fresh data in background
+        localStorage.setItem("authUser", JSON.stringify({ uid: user.uid, email: user.email }));
+        setCurrentUser(user);
         await fetchUserData(user);
       } else {
+        localStorage.removeItem("authUser");
+        localStorage.removeItem("userData");
+        setCurrentUser(null);
         setUserData(null);
         setLoading(false);
       }
