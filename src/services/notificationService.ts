@@ -36,47 +36,40 @@ interface NotificationPayload {
  * @param payload The notification content (title, message, etc.)
  */
 export const sendPushNotification = async (payload: NotificationPayload) => {
-  if (!ONESIGNAL_APP_ID || !ONESIGNAL_REST_API_KEY) {
-    console.error("OneSignal App ID or REST API Key is missing!");
-    return { success: false, error: "Missing configuration" };
-  }
-
   try {
-    const response = await fetch("https://onesignal.com/api/v1/notifications", {
+    console.log("Sending notification via proxy:", payload.title);
+    const response = await fetch("/api/notifications", {
       method: "POST",
-      mode: "cors",
       headers: {
         "Content-Type": "application/json; charset=utf-8",
-        "Authorization": `Basic ${ONESIGNAL_REST_API_KEY}`,
       },
       body: JSON.stringify({
-        app_id: ONESIGNAL_APP_ID,
-        included_segments: ["All"],
-        headings: { en: payload.title },
-        contents: { en: payload.message },
-        data: payload.data || {},
-        big_picture: payload.imageUrl || "",
-        large_icon: NOTIFICATION_ICON,
-        small_icon: "ic_stat_onesignal_default",
-        android_accent_color: "FFFFFFFF",
-        android_led_color: "FFFFFFFF",
-        android_visibility: 1,
-        priority: 10,
-        collapse_id: payload.collapseId,
+        title: payload.title,
+        message: payload.message,
+        data: payload.data,
+        imageUrl: payload.imageUrl,
+        collapseId: payload.collapseId,
       }),
     });
 
+    const contentType = response.headers.get("content-type");
+    if (!contentType || !contentType.includes("application/json")) {
+      const text = await response.text();
+      console.error("Non-JSON response received from proxy:", text.substring(0, 100));
+      return { success: false, error: "Server returned non-JSON response" };
+    }
+
     const result = await response.json();
 
-    if (response.ok) {
-      console.log("Notification sent successfully:", result);
+    if (result.success) {
+      console.log("Notification sent successfully via proxy:", result);
       return { success: true, data: result };
     } else {
-      console.error("Failed to send notification:", result);
+      console.error("Failed to send notification via proxy:", result);
       return { success: false, error: result };
     }
   } catch (error) {
-    console.error("Error sending notification:", error);
+    console.error("Error sending notification via proxy:", error);
     return { success: false, error: error };
   }
 };
