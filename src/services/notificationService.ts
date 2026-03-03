@@ -59,6 +59,15 @@ export const sendPushNotification = async (payload: NotificationPayload) => {
 
     const result = await response.json();
 
+    // Median.co (GoNative) Local Notification Fallback
+    if ((window as any).gonative && (window as any).gonative.notifications) {
+      console.log("Triggering Median Local Notification as well");
+      (window as any).gonative.notifications.create({
+        title: payload.title,
+        message: payload.message,
+      });
+    }
+
     if (result.success) {
       console.log("Notification sent successfully via proxy:", result);
       return { success: true, data: result };

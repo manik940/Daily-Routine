@@ -53,6 +53,17 @@ export default function NotificationManager() {
     });
 
     const checkAndSendNotifications = () => {
+      // Check for Median.co (GoNative) OneSignal Info
+      if ((window as any).gonative && (window as any).gonative.onesignal) {
+        (window as any).gonative.onesignal.getInfo((info: any) => {
+          console.log("Median OneSignal Info:", info);
+          if (!info.oneSignalUserId) {
+            console.warn("Device is not registered with OneSignal yet. Registering...");
+            (window as any).gonative.onesignal.register();
+          }
+        });
+      }
+
       const now = new Date();
       const currentH = now.getHours();
       const currentM = now.getMinutes();
