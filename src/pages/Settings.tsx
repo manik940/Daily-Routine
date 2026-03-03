@@ -6,7 +6,7 @@ import { useLanguage } from "../contexts/LanguageContext";
 import { useTheme } from "../contexts/ThemeContext";
 import DashboardLayout from "../components/DashboardLayout";
 import { auth, db } from "../firebase";
-import { Globe, Palette, Lock, Trash2, AlertTriangle, ArrowRight, Check } from "lucide-react";
+import { Globe, Palette, Lock, Trash2, AlertTriangle, ArrowRight, Check, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -77,7 +77,15 @@ export default function Settings() {
   return (
     <DashboardLayout>
       <div className="max-w-md mx-auto pb-20">
-        <h2 className="text-xl font-bold mb-6 text-gray-800">{t("settings")}</h2>
+        <div className="flex items-center gap-3 mb-6">
+          <button 
+            onClick={() => navigate(-1)}
+            className="p-2 -ml-2 text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
+          >
+            <ArrowLeft size={20} />
+          </button>
+          <h2 className="text-xl font-bold text-gray-800">{t("settings")}</h2>
+        </div>
         
         <div className="space-y-4">
             {/* Language */}

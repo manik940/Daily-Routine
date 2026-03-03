@@ -21,6 +21,7 @@ export default function Dashboard() {
   const [todayRoutine, setTodayRoutine] = useState<any[]>([]);
   const [todayTodos, setTodayTodos] = useState<any[]>([]);
   const [todayGoals, setTodayGoals] = useState<any[]>([]);
+  const [loadingData, setLoadingData] = useState(true);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -32,9 +33,20 @@ export default function Dashboard() {
   useEffect(() => {
     if (!currentUser) return;
 
+    setLoadingData(true);
     const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
     const today = days[new Date().getDay()];
     const dateStr = new Date().toISOString().split('T')[0];
+
+    let routineLoaded = false;
+    let todoLoaded = false;
+    let goalLoaded = false;
+
+    const checkAllLoaded = () => {
+      if (routineLoaded && todoLoaded && goalLoaded) {
+        setLoadingData(false);
+      }
+    };
 
     // Fetch Routine
     const routineRef = ref(db, `routines/${currentUser.uid}`);
@@ -58,6 +70,8 @@ export default function Dashboard() {
       } else {
         setTodayRoutine([]);
       }
+      routineLoaded = true;
+      checkAllLoaded();
     });
 
     // Fetch Todos
@@ -82,6 +96,8 @@ export default function Dashboard() {
       } else {
         setTodayTodos([]);
       }
+      todoLoaded = true;
+      checkAllLoaded();
     });
 
     // Fetch Goals
@@ -93,6 +109,8 @@ export default function Dashboard() {
       } else {
         setTodayGoals([]);
       }
+      goalLoaded = true;
+      checkAllLoaded();
     });
 
     return () => {
@@ -146,7 +164,7 @@ export default function Dashboard() {
 
 
 
-      <CurrentTaskBox todayTodos={todayTodos} todayRoutine={todayRoutine} theme={theme} currentTime={currentTime} />
+      <CurrentTaskBox todayTodos={todayTodos} todayRoutine={todayRoutine} theme={theme} currentTime={currentTime} loading={loadingData} />
 
       {/* Quick Access Grid - Square, White, Emoji */}
       <h3 className="font-bold text-gray-800 mb-3 flex items-center gap-2 text-sm uppercase tracking-wider opacity-70">
@@ -188,7 +206,7 @@ export default function Dashboard() {
 
 
 // Current Task Box Component
-const CurrentTaskBox = ({ todayTodos, todayRoutine, theme, currentTime }: { todayTodos: any[], todayRoutine: any[], theme: string, currentTime: Date }) => {
+const CurrentTaskBox = ({ todayTodos, todayRoutine, theme, currentTime, loading }: { todayTodos: any[], todayRoutine: any[], theme: string, currentTime: Date, loading: boolean }) => {
 
   const parseTimeLocal = (timeStr: string) => parseTime(timeStr, currentTime);
 
@@ -259,7 +277,7 @@ const CurrentTaskBox = ({ todayTodos, todayRoutine, theme, currentTime }: { toda
         <h3 className="font-bold text-gray-800 flex items-center gap-2 text-lg">
           এই সময়ের কাজ 🎯
         </h3>
-        {currentTask && (
+        {currentTask && !loading && (
           <div className="flex items-center gap-1.5 bg-red-50 text-red-600 px-3 py-1 rounded-full border border-red-100">
             <span className="text-sm animate-pulse">⏰</span>
             <span className="font-mono font-bold text-sm tracking-wider">{remainingTimeStr}</span>
@@ -267,7 +285,12 @@ const CurrentTaskBox = ({ todayTodos, todayRoutine, theme, currentTime }: { toda
         )}
       </div>
 
-      {todayTodos.length === 0 ? (
+      {loading ? (
+        <div className="flex flex-col items-center justify-center py-10 bg-gray-50 rounded-xl border border-dashed border-gray-200">
+          <div className="w-8 h-8 border-4 border-emerald-100 border-t-emerald-500 rounded-full animate-spin mb-3"></div>
+          <p className="text-gray-500 text-sm font-medium">লোড হচ্ছে...</p>
+        </div>
+      ) : todayTodos.length === 0 ? (
         <div className="text-center py-8 bg-gray-50 rounded-xl border border-dashed border-gray-200">
           <p className="text-gray-500 font-medium mb-3">প্রথমে টুডু লিস্ট তৈরি করুন</p>
           <Link to="/todo/setup" className="bg-blue-600 text-white px-5 py-2.5 rounded-xl font-bold text-sm inline-block shadow-md hover:bg-blue-700 transition-colors">

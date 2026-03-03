@@ -1,13 +1,24 @@
 import DashboardLayout from "../components/DashboardLayout";
 import { useLanguage } from "../contexts/LanguageContext";
+import { useNavigate } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
 
 export default function UserManual() {
   const { t } = useLanguage();
+  const navigate = useNavigate();
 
   return (
     <DashboardLayout>
       <div className="max-w-md mx-auto space-y-6">
-        <h2 className="text-xl font-bold text-center">{t('user_manual')}</h2>
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={() => navigate(-1)}
+            className="p-2 -ml-2 text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
+          >
+            <ArrowLeft size={20} />
+          </button>
+          <h2 className="text-xl font-bold">{t('user_manual')}</h2>
+        </div>
         
         <div className="bg-white rounded-xl shadow-sm p-6 space-y-6 text-gray-700 leading-relaxed">
             <section>

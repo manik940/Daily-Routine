@@ -1,16 +1,26 @@
 import React from 'react';
 import DashboardLayout from '../components/DashboardLayout';
 import { useLanguage } from '../contexts/LanguageContext';
-import { Mail } from 'lucide-react';
+import { Mail, ArrowLeft } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 export default function HelpSupport() {
   const { t } = useLanguage();
+  const navigate = useNavigate();
 
   return (
     <DashboardLayout>
       <div className="max-w-3xl mx-auto space-y-6">
         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-          <h2 className="text-xl font-bold text-gray-800 mb-6">{t('help_support')}</h2>
+          <div className="flex items-center gap-3 mb-6">
+            <button 
+              onClick={() => navigate(-1)}
+              className="p-2 -ml-2 text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
+            >
+              <ArrowLeft size={20} />
+            </button>
+            <h2 className="text-xl font-bold text-gray-800">{t('help_support')}</h2>
+          </div>
           
           <div className="flex items-center gap-4 p-4 bg-emerald-50 text-emerald-700 rounded-xl mb-6">
             <Mail size={28} />

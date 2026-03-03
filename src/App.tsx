@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { HashRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { Toaster } from 'react-hot-toast';
+import { Toaster, toast } from 'react-hot-toast';
 import { useAuth } from './contexts/AuthContext';
 import LoadingScreen from './components/common/LoadingScreen';
 import ScrollToTop from './components/common/ScrollToTop';
@@ -43,6 +43,23 @@ function AuthRoute({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
+  useEffect(() => {
+    const handleOnline = () => {
+      toast.success("ইন্টারনেট কানেকশন ফিরে এসেছে!", { id: 'network-status' });
+    };
+    const handleOffline = () => {
+      toast.error("ইন্টারনেট কানেকশন বিচ্ছিন্ন হয়েছে!", { id: 'network-status', duration: Infinity });
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
   return (
     <Router>
       <ScrollToTop />

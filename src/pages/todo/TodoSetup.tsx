@@ -216,7 +216,7 @@ export default function TodoSetup() {
     <div className="space-y-6">
         <div className="flex items-center gap-3 mb-6">
             <button 
-                onClick={() => navigate("/")}
+                onClick={() => navigate(-1)}
                 className="p-2 -ml-2 text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
             >
                 <ArrowLeft size={20} />

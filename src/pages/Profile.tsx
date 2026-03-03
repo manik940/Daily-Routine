@@ -1,13 +1,15 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { useLanguage } from "../contexts/LanguageContext";
 import DashboardLayout from "../components/DashboardLayout";
 import UserAvatar from "../components/UserAvatar";
-import { Copy, Check } from "lucide-react";
+import { Copy, Check, ArrowLeft } from "lucide-react";
 
 export default function Profile() {
   const { userData } = useAuth();
   const { t } = useLanguage();
+  const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
 
   const copyId = () => {
@@ -21,7 +23,15 @@ export default function Profile() {
   return (
     <DashboardLayout>
       <div className="max-w-md mx-auto space-y-6">
-        <h2 className="text-xl font-bold text-center">{t('profile')}</h2>
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={() => navigate(-1)}
+            className="p-2 -ml-2 text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
+          >
+            <ArrowLeft size={20} />
+          </button>
+          <h2 className="text-xl font-bold">{t('profile')}</h2>
+        </div>
         
         <div className="bg-white rounded-xl shadow-sm overflow-hidden">
             <div className="bg-emerald-600 h-24"></div>

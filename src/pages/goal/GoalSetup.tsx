@@ -4,7 +4,7 @@ import { useLanguage } from "../../contexts/LanguageContext";
 import DashboardLayout from "../../components/DashboardLayout";
 import { ref, push, set, onValue, remove } from "firebase/database";
 import { db } from "../../firebase";
-import { Plus, Trash2, Calendar, CheckCircle2, Edit2, Check, X } from "lucide-react";
+import { Plus, Trash2, Calendar, CheckCircle2, Edit2, Check, X, ArrowLeft } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { format, addDays } from "date-fns";
 import toast from "react-hot-toast";
@@ -152,8 +152,14 @@ export default function GoalSetup() {
   return (
     <DashboardLayout>
       <div className="max-w-md mx-auto px-4 py-2 flex flex-col min-h-[calc(100vh-100px)]">
-        {/* Header - Removed back button as requested */}
-        <div className="flex items-center justify-center mb-6">
+        {/* Header */}
+        <div className="flex items-center gap-3 mb-6">
+            <button 
+                onClick={() => navigate(-1)}
+                className="p-2 -ml-2 text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
+            >
+                <ArrowLeft size={20} />
+            </button>
             <h2 className="text-xl font-bold text-gray-800">Daily Goal সেটআপ</h2>
         </div>
 
